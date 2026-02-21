@@ -16,9 +16,17 @@ export default async function SurveyLayout({
 
   return (
     <SurveyProvider>
-      <div className="min-h-screen w-full bg-white">
-        {children}
-      </div>
+      <div className="relative">
+        {/* Fixed background for all survey pages */}
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 -z-10 bg-center bg-no-repeat bg-cover"
+          style={{ backgroundImage: "url('/surveybackground.png')" }}
+        />
+
+        {/* Everything (including footer) naturally sits on top */}
+        <div className="relative z-0 bg-transparent">{children}</div>
+     </div>
     </SurveyProvider>
   );
 }
