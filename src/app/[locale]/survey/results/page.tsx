@@ -6,11 +6,6 @@ import { useSurvey } from "@/app/components/survey/SurveyProvider";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 import { SurveyShell, PrimaryButton, SecondaryButton } from "@/app/components/survey/SurveyShell";
 import type { LiveJob } from "@/app/api/jobs/route";
-import jobsData from "@/app/data/jobs.json";
-
-/* ============================
-   Types
-============================ */
 
 type SkillId = import("@/app/components/survey/SurveyProvider").SkillId;
 type Answers = import("@/app/components/survey/SurveyProvider").Answers;
@@ -28,15 +23,68 @@ type Job = {
 
 type Match = { job: Job; score: number; reasons: string[]; gaps: string[] };
 
-/* ============================
-   Data source (JSON)
-============================ */
-
-const JOBS: Job[] = jobsData as Job[];
-
-/* ============================
-   Matching Logic
-============================ */
+const JOBS: Job[] = [
+  {
+    id: "front-desk",
+    title: "Front Desk Receptionist",
+    summary: "Greet visitors, answer phones, and schedule appointments at an office, clinic, or hotel.",
+    typicalTraining: "On-the-job training (1–2 weeks)",
+    payRange: [14, 22],
+    remoteFit: "onsite",
+    weights: { communication: 3, scheduling: 3, organization: 2, customerService: 2, attentionToDetail: 2, techComfort: 1 },
+    interestTags: ["Healthcare", "Office/Admin", "Nonprofit"]
+  },
+  {
+    id: "customer-service",
+    title: "Customer Service Representative",
+    summary: "Help customers by phone, chat, or in person — resolve issues and answer questions.",
+    typicalTraining: "On-the-job training (1–3 weeks)",
+    payRange: [15, 25],
+    remoteFit: "remote",
+    weights: { communication: 3, customerService: 3, writing: 2, techComfort: 2, attentionToDetail: 1 },
+    interestTags: ["Retail/Service", "Tech"]
+  },
+  {
+    id: "retail-associate",
+    title: "Retail Sales Associate",
+    summary: "Assist shoppers, process transactions, stock shelves, and keep the store organized.",
+    typicalTraining: "On-the-job training (a few days to 1 week)",
+    payRange: [13, 20],
+    remoteFit: "onsite",
+    weights: { customerService: 3, communication: 3, organization: 2, attentionToDetail: 1 },
+    interestTags: ["Retail/Service"]
+  },
+  {
+    id: "office-admin",
+    title: "Office Administrative Assistant",
+    summary: "Handle data entry, filing, scheduling, and day-to-day tasks for a team or office.",
+    typicalTraining: "On-the-job or short course (2–6 weeks)",
+    payRange: [16, 28],
+    remoteFit: "hybrid",
+    weights: { organization: 3, scheduling: 3, attentionToDetail: 3, techComfort: 2, writing: 2, communication: 1 },
+    interestTags: ["Office/Admin", "Nonprofit", "Tech"]
+  },
+  {
+    id: "bookkeeper",
+    title: "Bookkeeper",
+    summary: "Track income and expenses, manage invoices, and keep financial records accurate.",
+    typicalTraining: "Course or certification (4–12 weeks), or self-study",
+    payRange: [18, 32],
+    remoteFit: "remote",
+    weights: { budgeting: 3, attentionToDetail: 3, organization: 2, techComfort: 2, communication: 1 },
+    interestTags: ["Office/Admin", "Nonprofit"]
+  },
+  {
+    id: "teacher-aide",
+    title: "Teacher Aide",
+    summary: "Support classroom instruction, work with small groups, and help students with learning tasks.",
+    typicalTraining: "Background check + orientation; some roles require coursework",
+    payRange: [13, 22],
+    remoteFit: "onsite",
+    weights: { teaching: 3, caretaking: 2, communication: 2, organization: 2, attentionToDetail: 1 },
+    interestTags: ["Education", "Nonprofit"]
+  }
+];
 
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
@@ -116,26 +164,15 @@ function matchJobs(answers: Answers): Match[] {
 
     if (interestPct >= 0.5) reasons.push("Matches your interests");
     if (wageOk) reasons.push("Pay range can meet your minimum");
-    reasons.push(
-      remotePref === "no-pref"
-        ? "Flexible location fit"
-        : `Location fit: ${job.remoteFit}`
-    );
+    reasons.push(remotePref === "no-pref" ? "Flexible location fit" : `Location fit: ${job.remoteFit}`);
 
     return { job, score, reasons, gaps: Array.from(new Set(gaps)).slice(0, 3) };
   }).sort((a, b) => b.score - a.score);
 }
 
-<<<<<<< HEAD
 // ------------------------------------------------------------
 // LiveListings — Adzuna search only, no Gemini
 // ------------------------------------------------------------
-=======
-/* ============================
-   Live Listings Component
-============================ */
-
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
 type LiveListingsProps = {
   jobTitle: string;
   remote: string;
@@ -154,11 +191,11 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
         query: jobTitle,
         remote,
         location,
-        radiusMiles: String(radiusMiles)
+        radiusMiles: String(radiusMiles),
       });
       const res = await fetch(`/api/jobs?${params.toString()}`);
       if (!res.ok) throw new Error(`${res.status}`);
-      const data = (await res.json()) as { jobs: LiveJob[] };
+      const data = await res.json() as { jobs: LiveJob[] };
       setJobs(data.jobs);
       setState("done");
     } catch {
@@ -198,11 +235,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   if (state === "error") {
     return (
       <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-red-500">
-<<<<<<< HEAD
         Could not load listings. Check your API configuration.
-=======
-        Could not load listings.
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
       </p>
     );
   }
@@ -217,9 +250,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
 
   return (
     <div className="mt-5 space-y-2">
-      <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
-        Real listings
-      </p>
+      <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">Real listings</p>
       {jobs.map((j) => (
         <a
           key={j.id}
@@ -236,6 +267,11 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
               {j.company} · {j.location}
               {j.isRemote && " · Remote"}
             </p>
+            {j.publisher && (
+              <p className="font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[11px] mt-0.5">
+                via {j.publisher}
+              </p>
+            )}
           </div>
           <span className="shrink-0 mt-0.5 font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">
             Apply →
@@ -246,16 +282,9 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   );
 }
 
-<<<<<<< HEAD
 // ------------------------------------------------------------
 // Main Results Page
 // ------------------------------------------------------------
-=======
-/* ============================
-   Page
-============================ */
-
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
 export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
@@ -384,7 +413,6 @@ export default function SurveyResults() {
         {matches.map((m) => (
           <div
             key={m.job.id}
-<<<<<<< HEAD
             className="rounded-2xl border border-black/10 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]"
           >
             <div className="flex items-start justify-between gap-4">
@@ -449,16 +477,6 @@ export default function SurveyResults() {
 
             <p className="mt-5 font-['Space_Mono',sans-serif] text-[#5b5b5b] text-[12px] leading-[1.5]">
               Typical training: {m.job.typicalTraining}
-=======
-            className="rounded-2xl border border-black/10 bg-white/35 backdrop-blur-sm p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]"
-          >
-            <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
-              {m.job.title}
-            </p>
-
-            <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px]">
-              {m.job.summary}
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
             </p>
 
             {/* Hardcoded titles are already clean — no simplification needed */}
@@ -468,17 +486,45 @@ export default function SurveyResults() {
               location={answers.constraints.location}
               radiusMiles={answers.constraints.radiusMiles}
             />
+
+            <div className="mt-4 flex flex-col gap-2">
+              {chosenJobs.some((j) => j.id === m.job.id) ? (
+                <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-white text-center">
+                  ✓ Added to your job paths
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    addJobPath({
+                      id: m.job.id,
+                      title: m.job.title,
+                      summary: m.job.summary,
+                      payRange: m.job.payRange,
+                      remoteFit: m.job.remoteFit,
+                      score: m.score,
+                    })
+                  }
+                  className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] transition"
+                >
+                  Choose this job path
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => router.push(`resources/${m.job.id}`)}
+                className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] transition"
+              >
+                View training resources →
+              </button>
+            </div>
           </div>
         ))}
       </div>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
-        <SecondaryButton onClick={() => router.push("step-3")}>
-          Back
-        </SecondaryButton>
-        <PrimaryButton onClick={() => router.push("step-1")}>
-          Start over
-        </PrimaryButton>
+        <SecondaryButton onClick={() => router.push("step-3")}>Back</SecondaryButton>
+        <PrimaryButton onClick={() => router.push("step-1")}>Start over</PrimaryButton>
       </div>
     </SurveyShell>
   );
