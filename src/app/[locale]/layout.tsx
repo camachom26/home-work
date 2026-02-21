@@ -7,6 +7,7 @@ import { getMessages } from "next-intl/server";
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
 import { JobPathsProvider } from "@/app/components/survey/JobPathsProvider";
+import { SurveyProvider } from "@/app/components/survey/SurveyProvider";
 
 export default async function LocaleLayout({
   children,
@@ -20,13 +21,15 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <JobPathsProvider>
-        <div className="min-h-screen w-full bg-transparent">
-          <Navigation locale={locale} />
-          {children}
-          <Footer />
-        </div>
-      </JobPathsProvider>
+      <SurveyProvider>
+        <JobPathsProvider>
+          <div className="min-h-screen w-full bg-transparent">
+            <Navigation locale={locale} />
+            {children}
+            <Footer />
+          </div>
+        </JobPathsProvider>
+      </SurveyProvider>
     </NextIntlClientProvider>
   );
 }

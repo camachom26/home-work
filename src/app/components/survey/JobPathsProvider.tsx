@@ -49,6 +49,11 @@ export function JobPathsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
+    // Reset before loading so stale data from a previous user isn't persisted
+    setChosenJobs([]);
+    setSavedResources([]);
+    setLoaded(false);
+
     if (userId) {
       fetch("/api/user/data")
         .then((r) => r.json())

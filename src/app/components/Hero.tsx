@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export default function Hero({
   title = "Home --> Work",
@@ -19,6 +20,13 @@ export default function Hero({
 }) {
   const [entered, setEntered] = useState(false);
   useEffect(() => setEntered(true), []);
+
+  const ctaClass = [
+    "cta-hover inline-block",
+    "bg-[#1e1e1e] hover:bg-black text-white rounded-[8px] px-6 py-3",
+    "font-['Space_Mono',sans-serif] text-[16px]",
+    "transition-transform duration-200 ease-out hover:-translate-y-1"
+  ].join(" ");
 
   return (
     <section className="relative w-full min-h-[70vh] overflow-hidden rounded-[4px]">
@@ -93,18 +101,21 @@ export default function Hero({
             animationDelay: entered ? "120ms" : "0ms"
           }}
         >
-          <Link
-            href={`/${locale}/survey`}
-            onClick={onCtaClick}
-            className={[
-              "cta-hover inline-block",
-              "bg-[#1e1e1e] hover:bg-black text-white rounded-[8px] px-6 py-3",
-              "font-['Space_Mono',sans-serif] text-[16px]",
-              "transition-transform duration-200 ease-out hover:-translate-y-1"
-            ].join(" ")}
-          >
-            {ctaLabel}
-          </Link>
+          {/* Signed in: navigate directly */}
+          <SignedIn>
+            <Link href={`/${locale}/survey`} onClick={onCtaClick} className={ctaClass}>
+              {ctaLabel}
+            </Link>
+          </SignedIn>
+
+          {/* Signed out: open sign-in modal, then redirect to survey */}
+          <SignedOut>
+            <SignInButton mode="modal" forceRedirectUrl={`/${locale}/survey`}>
+              <button type="button" onClick={onCtaClick} className={ctaClass}>
+                {ctaLabel}
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </div>
     </section>
