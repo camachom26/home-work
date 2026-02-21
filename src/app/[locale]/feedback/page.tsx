@@ -78,31 +78,51 @@ function SecondaryButton({
     </button>
   );
 }
-
 export default function FeedbackPage() {
   const [message, setMessage] = useState("");
-    const handleSubmit = async () => {
-  const res = await fetch("/api/feedback", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ message })
-  });
+  const [toast, setToast] = useState<null | "submitted" | "error">(null);
+  const [sending, setSending] = useState(false);
 
-  if (res.ok) {
-    alert("Feedback sent!");
-    setMessage("");
-  } else {
-    alert("Something went wrong.");
-  }
-};
+  const showToast = (type: "submitted" | "error") => {
+    setToast(type);
+    window.setTimeout(() => setToast(null), 1800);
+  };
+
+  const handleSubmit = async () => {
+    if (!message.trim()) {
+      showToast("error");
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+
+      if (res.ok) {
+        setMessage("");
+        showToast("submitted");
+      } else {
+        showToast("error");
+      }
+    } catch {
+      showToast("error");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div
       className="w-full bg-fixed bg-[length:100%_auto] bg-top bg-no-repeat"
-      style={{ backgroundImage: "url('/surveybackground.png')" }}
+      style={{ backgroundImage: "url('/Summer2.png')" }}
     >
       <div className="w-full bg-white/10">
+
         {/* Header */}
         <header className="w-full">
           <div className="mx-auto max-w-7xl px-6 md:px-8 pt-10 md:pt-14 pb-4">
@@ -119,37 +139,62 @@ export default function FeedbackPage() {
 
         {/* Main */}
         <main className="w-full">
-              {/* Left column */}
-              <div className="mx-auto max-w-7xl px-6 md:px-8 pt-8 md:pt-10 pb-4">
-                <Card
-                  title="Your feedback"
-                  subtitle="Be specific. Even small suggestions make a difference."
-                >
-                  <div className="space-y-3">
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Write your thoughts here..."
-                      className="w-full min-h-[160px] rounded-[22px] bg-white/70 border border-black/10 p-5 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] focus:outline-none focus:border-black/30 resize-none"
-                    />
-                    <div className="flex gap-4">
-                      <SecondaryButton onClick={() => setMessage("")}>
-                        Clear
-                      </SecondaryButton>
-                      <PrimaryButton onClick={handleSubmit}>
-                        Submit
-                      </PrimaryButton>
-                    </div>
-                  </div>
-                </Card>
-              </div>
+          <div className="mx-auto max-w-7xl px-6 md:px-8 pt-8 md:pt-10 pb-4">
+            <Card
+              title="Your feedback"
+              subtitle="Be specific. Even small suggestions make a difference."
+            >
+              <div className="space-y-3">
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Write your thoughts here..."
+                  className="w-full min-h-[160px] rounded-[22px] bg-white/70 border border-black/10 p-5 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] focus:outline-none focus:border-black/30 resize-none"
+                />
 
-            <footer className="mt-8">
-              <p className="font-['Space_Mono',sans-serif] text-[12px] text-black/50">
+                <div className="flex gap-4">
+                  <SecondaryButton onClick={() => setMessage("")}>
+                    Clear
+                  </SecondaryButton>
+
+                  <PrimaryButton onClick={handleSubmit} disabled={sending}>
+                    {sending ? "Sending..." : "Submit"}
+                  </PrimaryButton>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+            <footer className="mt-8 pb-16">
+            <div className="mx-auto max-w-7xl px-6 md:px-8">
+                <p className="font-['Space_Mono',sans-serif] text-[12px] text-black/50">
                 © Winghacks 2026: Mia Camacho, Jade Xu, Daniel Lipszyc, Celia Mercier
-              </p>
+                </p>
+            </div>
             </footer>
         </main>
+
+        {toast && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            
+            {/* toast card */}
+            <div
+            className="relative
+            rounded-[28px]
+            bg-white/90
+            border border-black/20
+            shadow-[0px_20px_60px_rgba(0,0,0,0.25)]
+            px-10 py-8
+            font-['Press_Start_2P',sans-serif]
+            text-[14px]
+            text-[#0c0c0d]
+            animate-[fadeIn_200ms_ease-out]"
+            >
+            {toast === "submitted" ? "Submitted" : "Try again"}
+            </div>
+        </div>
+        )}
+
       </div>
     </div>
   );
