@@ -126,16 +126,10 @@ function matchJobs(answers: Answers): Match[] {
   }).sort((a, b) => b.score - a.score);
 }
 
-<<<<<<< HEAD
-// ------------------------------------------------------------
-// LiveListings — Adzuna search only, no Gemini
-// ------------------------------------------------------------
-=======
 /* ============================
    Live Listings Component
 ============================ */
 
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
 type LiveListingsProps = {
   jobTitle: string;
   remote: string;
@@ -198,11 +192,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   if (state === "error") {
     return (
       <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-red-500">
-<<<<<<< HEAD
-        Could not load listings. Check your API configuration.
-=======
         Could not load listings.
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
       </p>
     );
   }
@@ -246,16 +236,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   );
 }
 
-<<<<<<< HEAD
-// ------------------------------------------------------------
-// Main Results Page
-// ------------------------------------------------------------
-=======
-/* ============================
-   Page
-============================ */
 
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
 export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
@@ -384,72 +365,6 @@ export default function SurveyResults() {
         {matches.map((m) => (
           <div
             key={m.job.id}
-<<<<<<< HEAD
-            className="rounded-2xl border border-black/10 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
-                  {m.job.title}
-                </p>
-                <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.5]">
-                  {m.job.summary}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="font-['Press_Start_2P',sans-serif] text-[14px] text-[#0c0c0d]">
-                  {m.score}%
-                </p>
-                <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#5b5b5b]">match</p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="px-3 py-1 rounded-full bg-black/10 text-[#1e1e1e] font-['Space_Mono',sans-serif] text-[12px]">
-                ${m.job.payRange[0]}–${m.job.payRange[1]}/hr
-              </span>
-              <span className="px-3 py-1 rounded-full bg-black/10 text-[#1e1e1e] font-['Space_Mono',sans-serif] text-[12px]">
-                {m.job.remoteFit}
-              </span>
-            </div>
-
-            <div className="mt-5">
-              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
-                Why this matches
-              </p>
-              <ul className="mt-2 space-y-1">
-                {m.reasons.map((r, i) => (
-                  <li
-                    key={i}
-                    className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]"
-                  >
-                    • {r}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {m.gaps.length > 0 && (
-              <div className="mt-4">
-                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
-                  Helpful next skills
-                </p>
-                <ul className="mt-2 space-y-1">
-                  {m.gaps.map((g, i) => (
-                    <li
-                      key={i}
-                      className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]"
-                    >
-                      • {g}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <p className="mt-5 font-['Space_Mono',sans-serif] text-[#5b5b5b] text-[12px] leading-[1.5]">
-              Typical training: {m.job.typicalTraining}
-=======
             className="rounded-2xl border border-black/10 bg-white/35 backdrop-blur-sm p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]"
           >
             <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
@@ -458,7 +373,6 @@ export default function SurveyResults() {
 
             <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px]">
               {m.job.summary}
->>>>>>> b543987ea614f111b78460fbd6b0baffd2ffacd1
             </p>
 
             {/* Hardcoded titles are already clean — no simplification needed */}
