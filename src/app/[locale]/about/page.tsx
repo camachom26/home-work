@@ -144,14 +144,13 @@ export default function AboutPage() {
 
                 <Card
                   title="How it Works"
-                  subtitle="Use this section to describe the flow or core features."
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
-                      { title: "Step 1", body: "Add a short description here." },
-                      { title: "Step 2", body: "Add a short description here." },
-                      { title: "Step 3", body: "Add a short description here." },
-                      { title: "Step 4", body: "Add a short description here." }
+                      { title: "Step 1: Take the survey", body: "Answer a few questions about what you do day to day and turn it into a skills profile." },
+                      { title: "Step 2: Get matches", body: "See job paths picked for you, with a match score, pay range, and remote fit." },
+                      { title: "Step 3: Save your favorites", body: "Choose job paths you like and they show up on your dashboard as your targets." },
+                      { title: "Step 4: Make a plan & take action", body: "Set your wage/budget, save training options, and start applying!" }
                     ].map((s) => (
                       <div key={s.title} className="rounded-[22px] bg-white/70 border border-black/10 p-5">
                         <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[12px] leading-[1.3]">
@@ -166,14 +165,15 @@ export default function AboutPage() {
                 </Card>
 
                 <Card
-                  title="FAQ"
-                  subtitle="Keep answers short. Aim for clarity over completeness."
-                >
+                  title="FAQ"                >
                   <div className="space-y-3">
                     {[
-                      { q: "Who is this for?", a: "Answer goes here." },
-                      { q: "Is this free?", a: "Answer goes here." },
-                      { q: "What does it do with my data?", a: "Answer goes here." }
+                      { q: "Who is this for?", a: "Anyone whose skills do not always show up clearly on a traditional résumé, especially caregivers, community organizers, and people re entering the workforce. If you have been doing real work that just has not been recognized, this is for you." },
+                      { q: "Do I need a resume to use this?", a: "No, you can start with the survey. We focus on your real life skills first and help you build from there." },
+                      { q: "What does it do with my data?", a: "We use your answers to generate job matches and improve your experience. We do not sell your personal information. Your information stays focused on helping you move forward." },
+                      { q: "What if I do not have formal work experience?", a: "That is completely okay. Household management, caregiving, budgeting, coordination, and problem solving all count. Those skills are real and transferable."},
+                      { q: "Can I change my results later?", a: "Retake the survey anytime to refresh your matches and adjust your path as your goals evolve."}
+
                     ].map((item) => (
                       <div key={item.q} className="rounded-[22px] bg-white/70 border border-black/10 p-5">
                         <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[12px] leading-[1.35]">
