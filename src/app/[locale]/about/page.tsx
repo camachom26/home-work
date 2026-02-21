@@ -99,7 +99,7 @@ export default function AboutPage() {
   return (
     <div
       className="w-full bg-fixed bg-[length:100%_auto] bg-top bg-no-repeat"
-      style={{ backgroundImage: "url('/surveybackground.png')" }}
+      style={{ backgroundImage: "url('/Summer6.png')" }}
     >
       {/* keep background crisp; light overlay only */}
       <div className="w-full bg-white/10">
