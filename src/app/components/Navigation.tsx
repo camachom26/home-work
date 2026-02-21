@@ -40,6 +40,7 @@ function NavLinks({
 }) {
   const links = useMemo(
     () => [
+      { href: `/${locale}/dashboard`, label: "Dashboard" },
       { href: `/${locale}/about`, label: "About" },
       { href: `/${locale}/resources`, label: "Resources" },
       { href: `/${locale}/feedback`, label: "Feedback" }

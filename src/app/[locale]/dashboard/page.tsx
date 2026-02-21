@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 
 type Stat = { label: string; value: string; sub?: string };
 type Activity = { title: string; when: string; detail?: string; pill?: string };
@@ -148,6 +150,9 @@ function SecondaryButton({
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { chosenJobs, removeJobPath } = useJobPaths();
+
   // You can swap this to your actual auth/user data
   const userName = "Mia";
 
@@ -235,6 +240,71 @@ export default function DashboardPage() {
                       <StatCard key={s.label} stat={s} />
                     ))}
                   </div>
+                </Card>
+
+                <Card
+                  title="Chosen Job Paths"
+                  subtitle="Jobs you've saved from your survey results. Use these as your targets."
+                  right={
+                    <SecondaryButton onClick={() => router.push("survey/step-1")}>
+                      Retake survey
+                    </SecondaryButton>
+                  }
+                >
+                  {chosenJobs.length === 0 ? (
+                    <div className="rounded-[22px] bg-white/70 border border-black/10 p-6 text-center">
+                      <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.6]">
+                        No job paths chosen yet.
+                      </p>
+                      <p className="mt-2 font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[13px]">
+                        Complete the survey and click &ldquo;Choose this job path&rdquo; on a match.
+                      </p>
+                      <div className="mt-4 flex justify-center">
+                        <PrimaryButton onClick={() => router.push("survey/step-1")}>
+                          Take the survey
+                        </PrimaryButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {chosenJobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="rounded-[22px] bg-white/70 border border-black/10 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[12px] leading-[1.3]">
+                                {job.title}
+                              </p>
+                              <span className="px-2 py-0.5 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[11px] text-[#1e1e1e]">
+                                {job.score}% match
+                              </span>
+                            </div>
+                            <p className="mt-2 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]">
+                              {job.summary}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className="px-2 py-0.5 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[11px] text-[#1e1e1e]">
+                                ${job.payRange[0]}–${job.payRange[1]}/hr
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[11px] text-[#1e1e1e]">
+                                {job.remoteFit}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                            <SecondaryButton onClick={() => router.push(`survey/resources/${job.id}`)}>
+                              Resources
+                            </SecondaryButton>
+                            <SecondaryButton onClick={() => removeJobPath(job.id)}>
+                              Remove
+                            </SecondaryButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
 
                 <Card
