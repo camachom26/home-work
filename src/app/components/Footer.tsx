@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 export default function Footer() {
 
@@ -12,11 +13,35 @@ export default function Footer() {
                 Home → Work
                 </p>
                 <div className="flex gap-3">
-                <div className="h-8 w-8 rounded-lg bg-black/10" aria-hidden="true" />
-                <div className="h-8 w-8 rounded-lg bg-black/10" aria-hidden="true" />
-                <div className="h-8 w-8 rounded-lg bg-black/10" aria-hidden="true" />
+                    <div className="h-8 w-8 rounded-lg" aria-hidden="true">
+                        <Image
+                            src="/github.svg"
+                            alt="Check out our github"
+                            width={40}
+                            height={100}
+                            className="object-contain"
+                        />
+                    </div> 
+                    <div className="h-8 w-8 rounded-lg" aria-hidden="true">
+                        <Image
+                            src="/devpost.png"
+                            alt="Check out our github"
+                            width={40}
+                            height={100}
+                            className="object-contain"
+                        />
+                    </div>
+                    <div className="h-8 w-8 rounded-lg" aria-hidden="true">
+                        <Image
+                            src="/youtube.png"
+                            alt="Watch our demo"
+                            width={40}
+                            height={40}
+                            className="object-contain"
+                        />
+                    </div> 
                 </div>
-            </div>
+        </div>
 
             {/* Example columns */}
             <div className="flex flex-col gap-2 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e]">

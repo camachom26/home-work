@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 export type ChosenJob = {
   id: string;
@@ -35,31 +36,69 @@ type JobPathsCtx = {
 
 const JobPathsContext = createContext<JobPathsCtx | null>(null);
 
-const JOBS_KEY = "home-work.job-paths.v1";
-const RESOURCES_KEY = "home-work.training-resources.v1";
+const LS_JOBS = "home-work.job-paths.v1";
+const LS_RESOURCES = "home-work.training-resources.v1";
 
 export function JobPathsProvider({ children }: { children: React.ReactNode }) {
+  const { userId, isLoaded } = useAuth();
   const [chosenJobs, setChosenJobs] = useState<ChosenJob[]>([]);
   const [savedResources, setSavedResources] = useState<SavedResource[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
+  // Load data: MongoDB if signed in, localStorage otherwise
   useEffect(() => {
+    if (!isLoaded) return;
+
+    // Reset before loading so stale data from a previous user isn't persisted
+    setChosenJobs([]);
+    setSavedResources([]);
+    setLoaded(false);
+
+    if (userId) {
+      fetch("/api/user/data")
+        .then((r) => r.json())
+        .then((data) => {
+          setChosenJobs(data.chosenJobs ?? []);
+          setSavedResources(data.savedResources ?? []);
+        })
+        .catch(() => loadFromLocalStorage())
+        .finally(() => setLoaded(true));
+    } else {
+      loadFromLocalStorage();
+      setLoaded(true);
+    }
+  }, [isLoaded, userId]);
+
+  function loadFromLocalStorage() {
     try {
-      const raw = localStorage.getItem(JOBS_KEY);
-      if (raw) setChosenJobs(JSON.parse(raw) as ChosenJob[]);
+      const jobs = localStorage.getItem(LS_JOBS);
+      if (jobs) setChosenJobs(JSON.parse(jobs));
     } catch { /* ignore */ }
     try {
-      const raw = localStorage.getItem(RESOURCES_KEY);
-      if (raw) setSavedResources(JSON.parse(raw) as SavedResource[]);
+      const resources = localStorage.getItem(LS_RESOURCES);
+      if (resources) setSavedResources(JSON.parse(resources));
     } catch { /* ignore */ }
-  }, []);
+  }
 
+  // Persist whenever data changes (after initial load)
   useEffect(() => {
-    try { localStorage.setItem(JOBS_KEY, JSON.stringify(chosenJobs)); } catch { /* ignore */ }
-  }, [chosenJobs]);
+    if (!loaded) return;
 
-  useEffect(() => {
-    try { localStorage.setItem(RESOURCES_KEY, JSON.stringify(savedResources)); } catch { /* ignore */ }
-  }, [savedResources]);
+    if (userId) {
+      fetch("/api/user/data", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chosenJobs, savedResources }),
+      }).catch(() => saveToLocalStorage());
+    } else {
+      saveToLocalStorage();
+    }
+  }, [chosenJobs, savedResources, loaded]);
+
+  function saveToLocalStorage() {
+    try { localStorage.setItem(LS_JOBS, JSON.stringify(chosenJobs)); } catch { /* ignore */ }
+    try { localStorage.setItem(LS_RESOURCES, JSON.stringify(savedResources)); } catch { /* ignore */ }
+  }
 
   const addJobPath = (job: Omit<ChosenJob, "addedAt">) => {
     setChosenJobs((prev) => {

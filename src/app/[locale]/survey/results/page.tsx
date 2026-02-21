@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSurvey } from "@/app/components/survey/SurveyProvider";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
@@ -203,15 +204,6 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
     }
   }, [jobTitle, remote, location, radiusMiles]);
 
-  // Guard: if no location and not remote, prompt user to add one
-  if (!location.trim() && remote !== "remote") {
-    return (
-      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b]">
-        Add your location in Step 3 to find real listings near you.
-      </p>
-    );
-  }
-
   if (state === "idle") {
     return (
       <button
@@ -292,6 +284,17 @@ export default function SurveyResults() {
 
   const matches = useMemo(() => matchJobs(answers), [answers]);
 
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [selectedAITitle, setSelectedAITitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setSelectedMatch(null); setSelectedAITitle(null); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Gemini: fetch AI-suggested job titles once on mount (only if pitch exists)
   const [geminiTitles, setGeminiTitles] = useState<string[]>([]);
   const [geminiStatus, setGeminiStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -323,12 +326,93 @@ export default function SurveyResults() {
   }, [answers.notes, answers.skills, answers.interests, answers.constraints]);
 
   return (
+    <>
     <SurveyShell
       title="Survey → Job Match"
       subtitle="Results: ranked by skills, interests, and constraints."
+      
+      // how do i add an executive summary that highlights key insights from the matches? maybe a bullet list of top reasons for the best match, or a summary of skill gaps to work on? 
+      // also provide the pitch the user gave, and their initial constraints, so they can see how those influenced the results and tweak them if needed?
       step={4}
       total={4}
     >
+      {/* ── Executive Summary ── */}
+<div className="mb-10 rounded-2xl border border-black/10 bg-white/70 p-7 shadow-[0px_8px_20px_rgba(0,0,0,0.08)]">
+  <p className="font-['Space_Mono',sans-serif] font-bold text-[16px] text-[#1e1e1e] mb-4">
+    Your Results at a Glance
+  </p>
+
+  {/* Top match callout */}
+  {matches[0] && (
+    <div className="mb-5 rounded-xl bg-black/5 px-5 py-4">
+      <p className="font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e]">
+        <span className="font-bold">Top match:</span> {matches[0].job.title} ({matches[0].score}%)
+      </p>
+      <ul className="mt-2 space-y-1">
+        {matches[0].reasons.map((r, i) => (
+          <li key={i} className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">• {r}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {/* Skill gaps across all top matches */}
+  {(() => {
+    const allGaps = Array.from(
+      new Set(matches.slice(0, 3).flatMap((m) => m.gaps))
+    ).slice(0, 4);
+    return allGaps.length > 0 ? (
+      <div className="mb-5">
+        <p className="font-['Space_Mono',sans-serif] font-bold text-[13px] text-[#1e1e1e] mb-2">
+          Skills To Build for Better Matches
+        </p>
+        <ul className="space-y-1">
+          {allGaps.map((g, i) => (
+            <li key={i} className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">• {g}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+  })()}
+
+  {/* User's pitch */}
+  {answers.notes.trim() && (
+    <div className="mb-5">
+      <p className="font-['Space_Mono',sans-serif] font-bold text-[13px] text-[#1e1e1e] mb-1">
+        Your Pitch
+      </p>
+      <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b] leading-[1.6] italic">
+        "{answers.notes.trim()}"
+      </p>
+    </div>
+  )}
+
+  {/* Constraints summary */}
+  <div>
+    <p className="font-['Space_Mono',sans-serif] font-bold text-[13px] text-[#1e1e1e] mb-2">
+      Your Constraints
+    </p>
+    <div className="flex flex-wrap gap-2">
+      <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+        min wage: ${answers.constraints.minWage}/hr
+      </span>
+      <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+        {answers.constraints.remote === "no-pref" ? "Any location" : answers.constraints.remote}
+      </span>
+      {answers.constraints.location && (
+        <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+          📍 {answers.constraints.location}
+        </span>
+      )}
+      {answers.constraints.radiusMiles && (
+        <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+          within {answers.constraints.radiusMiles} mi
+        </span>
+      )}
+    </div>
+  </div>
+</div>
+
       {/* ── Gemini AI Section (only shown if user wrote a pitch) ── */}
       {answers.notes.trim() && (
         <div className="mb-10">
@@ -360,37 +444,38 @@ export default function SurveyResults() {
           {geminiStatus === "done" && geminiTitles.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {geminiTitles.map((title) => (
-                <div
+                <button
                   key={title}
-                  className="rounded-2xl border border-blue-200 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.08)]"
+                  type="button"
+                  onClick={() => setSelectedAITitle(title)}
+                  className="text-left rounded-2xl border border-black/10 bg-white/70 hover:bg-white hover:shadow-[0px_12px_28px_rgba(0,0,0,0.14)] p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)] transition cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      {/* Show the original Gemini title to the user */}
-                      <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
-                        {title}
+                    <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
+                      {title}
+                    </p>
+                    <div className="shrink-0 text-right">
+                      <p className="font-['Press_Start_2P',sans-serif] text-[14px] text-[#0c0c0d]">
+                        AI
                       </p>
-                      <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px]">
-                        Suggested based on your pitch & skills
-                      </p>
+                      <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#5b5b5b]">match</p>
                     </div>
-                    <span className="shrink-0 px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-['Space_Mono',sans-serif] text-[11px]">
-                      AI
+                  </div>
+
+                  <p className="mt-2 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.5]">
+                    Suggested based on your pitch & skills
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="px-3 py-1 rounded-full bg-black/10 text-[#1e1e1e] font-['Space_Mono',sans-serif] text-[12px]">
+                      pitch match
                     </span>
                   </div>
 
-                  {/*
-                    Pass simplifyTitle(title) to Adzuna so searches are broader.
-                    e.g. "Senior Family Support Specialist" → "Family Support Assistant"
-                    The card still displays the original Gemini title above.
-                  */}
-                  <LiveListings
-                    jobTitle={simplifyTitle(title)}
-                    remote={answers.constraints.remote}
-                    location={answers.constraints.location}
-                    radiusMiles={answers.constraints.radiusMiles}
-                  />
-                </div>
+                  <p className="mt-5 font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[12px]">
+                    Click to view details →
+                  </p>
+                </button>
               ))}
             </div>
           )}
@@ -411,19 +496,16 @@ export default function SurveyResults() {
       {/* ── Hardcoded Skill-Based Matches ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {matches.map((m) => (
-          <div
+          <button
             key={m.job.id}
-            className="rounded-2xl border border-black/10 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]"
+            type="button"
+            onClick={() => setSelectedMatch(m)}
+            className="text-left rounded-2xl border border-black/10 bg-white/70 hover:bg-white hover:shadow-[0px_12px_28px_rgba(0,0,0,0.14)] p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)] transition cursor-pointer"
           >
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
-                  {m.job.title}
-                </p>
-                <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.5]">
-                  {m.job.summary}
-                </p>
-              </div>
+              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
+                {m.job.title}
+              </p>
               <div className="shrink-0 text-right">
                 <p className="font-['Press_Start_2P',sans-serif] text-[14px] text-[#0c0c0d]">
                   {m.score}%
@@ -431,6 +513,10 @@ export default function SurveyResults() {
                 <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#5b5b5b]">match</p>
               </div>
             </div>
+
+            <p className="mt-2 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.5]">
+              {m.job.summary}
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="px-3 py-1 rounded-full bg-black/10 text-[#1e1e1e] font-['Space_Mono',sans-serif] text-[12px]">
@@ -441,91 +527,224 @@ export default function SurveyResults() {
               </span>
             </div>
 
-            <div className="mt-5">
-              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
-                Why this matches
-              </p>
-              <ul className="mt-2 space-y-1">
-                {m.reasons.map((r, i) => (
-                  <li
-                    key={i}
-                    className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]"
-                  >
-                    • {r}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {m.gaps.length > 0 && (
-              <div className="mt-4">
-                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
-                  Helpful next skills
-                </p>
-                <ul className="mt-2 space-y-1">
-                  {m.gaps.map((g, i) => (
-                    <li
-                      key={i}
-                      className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]"
-                    >
-                      • {g}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <p className="mt-5 font-['Space_Mono',sans-serif] text-[#5b5b5b] text-[12px] leading-[1.5]">
-              Typical training: {m.job.typicalTraining}
+            <p className="mt-5 font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[12px]">
+              Click to view details →
             </p>
-
-            {/* Hardcoded titles are already clean — no simplification needed */}
-            <LiveListings
-              jobTitle={m.job.title}
-              remote={answers.constraints.remote}
-              location={answers.constraints.location}
-              radiusMiles={answers.constraints.radiusMiles}
-            />
-
-            <div className="mt-4 flex flex-col gap-2">
-              {chosenJobs.some((j) => j.id === m.job.id) ? (
-                <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-white text-center">
-                  ✓ Added to your job paths
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() =>
-                    addJobPath({
-                      id: m.job.id,
-                      title: m.job.title,
-                      summary: m.job.summary,
-                      payRange: m.job.payRange,
-                      remoteFit: m.job.remoteFit,
-                      score: m.score,
-                    })
-                  }
-                  className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] transition"
-                >
-                  Choose this job path
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => router.push(`resources/${m.job.id}`)}
-                className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] transition"
-              >
-                View training resources →
-              </button>
-            </div>
-          </div>
+          </button>
         ))}
       </div>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
-        <SecondaryButton onClick={() => router.push("step-3")}>Back</SecondaryButton>
-        <PrimaryButton onClick={() => router.push("step-1")}>Start over</PrimaryButton>
+        <PrimaryButton onClick={() => router.push("step-3")}>Back</PrimaryButton>
+        <SecondaryButton onClick={() => router.push("step-1")}>Start over</SecondaryButton>
+        <PrimaryButton onClick={() => router.push("/dashboard")}> Go to Dashboard → </PrimaryButton>
       </div>
+
     </SurveyShell>
+
+    {selectedMatch && typeof document !== "undefined" && createPortal(
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-6"
+        onClick={() => setSelectedMatch(null)}
+      >
+        <div
+          className="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-[28px] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.30)] p-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close */}
+          <button
+            type="button"
+            onClick={() => setSelectedMatch(null)}
+            className="absolute top-5 right-5 h-9 w-9 rounded-full border border-black/15 bg-black/5 hover:bg-black/10 flex items-center justify-center font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] transition"
+          >
+            ✕
+          </button>
+
+          {/* Header */}
+          <div className="flex items-start justify-between gap-6 pr-10">
+            <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[clamp(14px,1.8vw,20px)] leading-[1.3]">
+              {selectedMatch.job.title}
+            </p>
+            <div className="shrink-0 text-right">
+              <p className="font-['Press_Start_2P',sans-serif] text-[18px] text-[#0c0c0d]">
+                {selectedMatch.score}%
+              </p>
+              <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#5b5b5b]">match</p>
+            </div>
+          </div>
+
+          <p className="mt-4 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[15px] leading-[1.7]">
+            {selectedMatch.job.summary}
+          </p>
+
+          {/* Tags */}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e]">
+              ${selectedMatch.job.payRange[0]}–${selectedMatch.job.payRange[1]}/hr
+            </span>
+            <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e]">
+              {selectedMatch.job.remoteFit}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e]">
+              {selectedMatch.job.typicalTraining}
+            </span>
+          </div>
+
+          {/* Why it matches */}
+          <div className="mt-7">
+            <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[14px]">
+              Why this matches
+            </p>
+            <ul className="mt-3 space-y-2">
+              {selectedMatch.reasons.map((r, i) => (
+                <li key={i} className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.6]">
+                  • {r}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Skill gaps */}
+          {selectedMatch.gaps.length > 0 && (
+            <div className="mt-6">
+              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[14px]">
+                Helpful next skills
+              </p>
+              <ul className="mt-3 space-y-2">
+                {selectedMatch.gaps.map((g, i) => (
+                  <li key={i} className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.6]">
+                    • {g}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Live listings */}
+          <div className="mt-7 border-t border-black/10 pt-6">
+            <LiveListings
+              jobTitle={selectedMatch.job.title}
+              remote={answers.constraints.remote}
+              location={answers.constraints.location}
+              radiusMiles={answers.constraints.radiusMiles}
+            />
+          </div>
+
+          {/* Action buttons */}
+          <div className="mt-7 flex flex-col gap-3">
+            {chosenJobs.some((j) => j.id === selectedMatch.job.id) ? (
+              <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[14px] text-white text-center">
+                ✓ Added to your job paths
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  addJobPath({
+                    id: selectedMatch.job.id,
+                    title: selectedMatch.job.title,
+                    summary: selectedMatch.job.summary,
+                    payRange: selectedMatch.job.payRange,
+                    remoteFit: selectedMatch.job.remoteFit,
+                    score: selectedMatch.score,
+                  });
+                }}
+                className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition"
+              >
+                Choose this job path
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => { setSelectedMatch(null); router.push(`resources/${selectedMatch.job.id}`); }}
+              className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] transition"
+            >
+              View training resources →
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+
+    {selectedAITitle && typeof document !== "undefined" && createPortal(
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-6"
+        onClick={() => setSelectedAITitle(null)}
+      >
+        <div
+          className="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-[28px] bg-white shadow-[0px_20px_60px_rgba(0,0,0,0.30)] p-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close */}
+          <button
+            type="button"
+            onClick={() => setSelectedAITitle(null)}
+            className="absolute top-5 right-5 h-9 w-9 rounded-full border border-black/15 bg-black/5 hover:bg-black/10 flex items-center justify-center font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] transition"
+          >
+            ✕
+          </button>
+
+          {/* Header */}
+          <div className="flex items-start justify-between gap-6 pr-10">
+            <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[clamp(14px,1.8vw,20px)] leading-[1.3]">
+              {selectedAITitle}
+            </p>
+            <div className="shrink-0 text-right">
+              <p className="font-['Press_Start_2P',sans-serif] text-[18px] text-[#0c0c0d]">AI</p>
+              <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#5b5b5b]">match</p>
+            </div>
+          </div>
+
+          <p className="mt-4 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[15px] leading-[1.7]">
+            Suggested based on your pitch & skills
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e]">
+              pitch match
+            </span>
+          </div>
+
+          {/* Live listings */}
+          <div className="mt-7 border-t border-black/10 pt-6">
+            <LiveListings
+              jobTitle={simplifyTitle(selectedAITitle)}
+              remote={answers.constraints.remote}
+              location={answers.constraints.location}
+              radiusMiles={answers.constraints.radiusMiles}
+            />
+          </div>
+
+          {/* Action buttons */}
+          <div className="mt-7 flex flex-col gap-3">
+            {chosenJobs.some((j) => j.id === `ai::${selectedAITitle}`) ? (
+              <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[14px] text-white text-center">
+                ✓ Added to your job paths
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  addJobPath({
+                    id: `ai::${selectedAITitle}`,
+                    title: selectedAITitle,
+                    summary: "Suggested based on your pitch & skills",
+                    payRange: [0, 0],
+                    remoteFit: answers.constraints.remote === "remote" ? "remote" : answers.constraints.remote === "onsite" ? "onsite" : "hybrid",
+                    score: 0,
+                  });
+                }}
+                className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition"
+              >
+                Choose this job path
+              </button>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

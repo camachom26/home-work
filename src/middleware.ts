@@ -1,12 +1,20 @@
-import createMiddleware from "next-intl/middleware";
-import {locales, defaultLocale} from "@/i18n/routing";
+import { clerkMiddleware } from "@clerk/nextjs/server";
+import createIntlMiddleware from "next-intl/middleware";
+import { locales, defaultLocale } from "@/i18n/routing";
 
-export default createMiddleware({
-    locales: ["en", "es"],
-    defaultLocale: "en"
+const handleI18nRouting = createIntlMiddleware({
+  locales,
+  defaultLocale,
+});
+
+export default clerkMiddleware(async (_auth, req) => {
+  // Only apply intl routing to non-API routes
+  if (!req.nextUrl.pathname.startsWith("/api")) {
+    return handleI18nRouting(req);
+  }
 });
 
 export const config = {
-  // Skip Next.js internals and files
-  matcher: ["/((?!api|_next|.*\\..*).*)"]
+  // Include API routes (so Clerk can read the session), exclude Next.js internals and static files
+  matcher: ["/((?!_next|.*\\..*).*)"],
 };
