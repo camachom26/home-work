@@ -1,0 +1,99 @@
+[
+  {
+    "id": "front-desk",
+    "title": "Front Desk Receptionist",
+    "summary": "Greet visitors, answer phones, and schedule appointments at an office, clinic, or hotel.",
+    "typicalTraining": "On-the-job training (1–2 weeks)",
+    "payRange": [14, 22],
+    "remoteFit": "onsite",
+    "weights": {
+      "communication": 3,
+      "scheduling": 3,
+      "organization": 2,
+      "customerService": 2,
+      "attentionToDetail": 2,
+      "techComfort": 1
+    },
+    "interestTags": ["Healthcare", "Office/Admin", "Nonprofit"]
+  },
+  {
+    "id": "customer-service",
+    "title": "Customer Service Representative",
+    "summary": "Help customers by phone, chat, or in person — resolve issues and answer questions.",
+    "typicalTraining": "On-the-job training (1–3 weeks)",
+    "payRange": [15, 25],
+    "remoteFit": "remote",
+    "weights": {
+      "communication": 3,
+      "customerService": 3,
+      "writing": 2,
+      "techComfort": 2,
+      "attentionToDetail": 1
+    },
+    "interestTags": ["Retail/Service", "Tech"]
+  },
+  {
+    "id": "retail-associate",
+    "title": "Retail Sales Associate",
+    "summary": "Assist shoppers, process transactions, stock shelves, and keep the store organized.",
+    "typicalTraining": "On-the-job training (a few days to 1 week)",
+    "payRange": [13, 20],
+    "remoteFit": "onsite",
+    "weights": {
+      "customerService": 3,
+      "communication": 3,
+      "organization": 2,
+      "attentionToDetail": 1
+    },
+    "interestTags": ["Retail/Service"]
+  },
+  {
+    "id": "office-admin",
+    "title": "Office Administrative Assistant",
+    "summary": "Handle data entry, filing, scheduling, and day-to-day tasks for a team or office.",
+    "typicalTraining": "On-the-job or short course (2–6 weeks)",
+    "payRange": [16, 28],
+    "remoteFit": "hybrid",
+    "weights": {
+      "organization": 3,
+      "scheduling": 3,
+      "attentionToDetail": 3,
+      "techComfort": 2,
+      "writing": 2,
+      "communication": 1
+    },
+    "interestTags": ["Office/Admin", "Nonprofit", "Tech"]
+  },
+  {
+    "id": "bookkeeper",
+    "title": "Bookkeeper",
+    "summary": "Track income and expenses, manage invoices, and keep financial records accurate.",
+    "typicalTraining": "Course or certification (4–12 weeks), or self-study",
+    "payRange": [18, 32],
+    "remoteFit": "remote",
+    "weights": {
+      "budgeting": 3,
+      "attentionToDetail": 3,
+      "organization": 2,
+      "techComfort": 2,
+      "communication": 1
+    },
+    "interestTags": ["Office/Admin", "Nonprofit"]
+  },
+  {
+    "id": "teacher-aide",
+    "title": "Teacher Aide",
+    "summary": "Support classroom instruction, work with small groups, and help students with learning tasks.",
+    "typicalTraining": "Background check + orientation; some roles require coursework",
+    "payRange": [13, 22],
+    "remoteFit": "onsite",
+    "weights": {
+      "teaching": 3,
+      "caretaking": 2,
+      "communication": 2,
+      "organization": 2,
+      "attentionToDetail": 1
+    },
+    "interestTags": ["Education", "Nonprofit"]
+  }
+]

@@ -130,7 +130,7 @@ export default function DashboardPage() {
   return (
     <div
       className="w-full bg-fixed bg-[length:100%_auto] bg-top bg-no-repeat"
-      style={{ backgroundImage: "url('/surveybackground.png')" }}
+      style={{ backgroundImage: "url('/landing/hero.png')" }}
     >
       <div className="w-full bg-white/10">
         <header className="w-full">

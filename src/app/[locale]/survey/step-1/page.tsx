@@ -16,7 +16,7 @@ export default function SurveyStep1() {
   const [browserSupportsSpeech, setBrowserSupportsSpeech] = useState(false);
   const recognitionRef = useRef<any>(null);
   const [examplePitch, setExamplePitch] = useState(EXAMPLE_PITCH);
-  const [showExample, setShowExample] = useState(true);
+  const [showExample, setShowExample] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
 
   useEffect(() => {
@@ -199,9 +199,7 @@ export default function SurveyStep1() {
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
         <SecondaryButton onClick={() => router.back()}>Back</SecondaryButton>
-        <PrimaryButton onClick={() => router.push("step-2")} disabled={!answers.notes.trim()}>
-          Next
-        </PrimaryButton>
+        <PrimaryButton onClick={() => router.push("step-2")}>Next</PrimaryButton>
       </div>
     </SurveyShell>
   );

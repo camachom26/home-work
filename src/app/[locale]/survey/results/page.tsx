@@ -1,15 +1,12 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSurvey } from "@/app/components/survey/SurveyProvider";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 import { SurveyShell, PrimaryButton, SecondaryButton } from "@/app/components/survey/SurveyShell";
 import type { LiveJob } from "@/app/api/jobs/route";
 
-/** Same JOBS + matcher logic as before, moved into this file for simplicity.
- * If you want, we can move it to app/components/survey/matching.ts
- */
 type SkillId = import("@/app/components/survey/SurveyProvider").SkillId;
 type Answers = import("@/app/components/survey/SurveyProvider").Answers;
 
@@ -109,6 +106,25 @@ function skillLabel(id: SkillId) {
   return map[id] ?? id;
 }
 
+/**
+ * Strips seniority prefixes and overly specific suffixes so Adzuna
+ * returns broader, more relevant results for AI-generated titles.
+ * e.g. "Senior Family Support Specialist" → "Family Support Assistant"
+ */
+function simplifyTitle(title: string): string {
+  return title
+    .replace(/^(Senior|Junior|Entry[\s-]Level|Lead|Sr\.|Jr\.)\s+/gi, "")
+    .replace(/\b(Specialist|Coordinator|Associate)\b/gi, (match) => {
+      const map: Record<string, string> = {
+        specialist: "Assistant",
+        coordinator: "Assistant",
+        associate: "Assistant",
+      };
+      return map[match.toLowerCase()] ?? match;
+    })
+    .trim();
+}
+
 function matchJobs(answers: Answers): Match[] {
   return JOBS.map((job) => {
     let skillScore = 0;
@@ -154,7 +170,15 @@ function matchJobs(answers: Answers): Match[] {
   }).sort((a, b) => b.score - a.score);
 }
 
-type LiveListingsProps = { jobTitle: string; remote: string; location: string; radiusMiles: number };
+// ------------------------------------------------------------
+// LiveListings — Adzuna search only, no Gemini
+// ------------------------------------------------------------
+type LiveListingsProps = {
+  jobTitle: string;
+  remote: string;
+  location: string;
+  radiusMiles: number;
+};
 
 function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsProps) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -179,6 +203,15 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
     }
   }, [jobTitle, remote, location, radiusMiles]);
 
+  // Guard: if no location and not remote, prompt user to add one
+  if (!location.trim() && remote !== "remote") {
+    return (
+      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b]">
+        Add your location in Step 3 to find real listings near you.
+      </p>
+    );
+  }
+
   if (state === "idle") {
     return (
       <button
@@ -202,7 +235,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   if (state === "error") {
     return (
       <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-red-500">
-        Could not load listings. Check your ADZUNA_APP_ID / ADZUNA_APP_KEY.
+        Could not load listings. Check your API configuration.
       </p>
     );
   }
@@ -210,7 +243,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   if (jobs.length === 0) {
     return (
       <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b]">
-        No listings found right now.
+        No listings found for this title right now.
       </p>
     );
   }
@@ -240,19 +273,54 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
               </p>
             )}
           </div>
-          <span className="shrink-0 mt-0.5 font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">Apply →</span>
+          <span className="shrink-0 mt-0.5 font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">
+            Apply →
+          </span>
         </a>
       ))}
     </div>
   );
 }
 
+// ------------------------------------------------------------
+// Main Results Page
+// ------------------------------------------------------------
 export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
   const { chosenJobs, addJobPath } = useJobPaths();
 
   const matches = useMemo(() => matchJobs(answers), [answers]);
+
+  // Gemini: fetch AI-suggested job titles once on mount (only if pitch exists)
+  const [geminiTitles, setGeminiTitles] = useState<string[]>([]);
+  const [geminiStatus, setGeminiStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  useEffect(() => {
+    if (!answers.notes.trim()) return;
+
+    setGeminiStatus("loading");
+
+    fetch("/api/test-gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userPitch: answers.notes,
+        skills: answers.skills,
+        interests: answers.interests,
+        constraints: answers.constraints, // ✅ always send constraints
+      }),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((data: { jobTitles: string[] }) => {
+        setGeminiTitles(data.jobTitles ?? []);
+        setGeminiStatus("done");
+      })
+      .catch(() => setGeminiStatus("error"));
+  }, [answers.notes, answers.skills, answers.interests, answers.constraints]);
 
   return (
     <SurveyShell
@@ -261,16 +329,105 @@ export default function SurveyResults() {
       step={4}
       total={4}
     >
+      {/* ── Gemini AI Section (only shown if user wrote a pitch) ── */}
+      {answers.notes.trim() && (
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <p className="font-['Space_Mono',sans-serif] font-bold text-[20px] text-[#1e1e1e]">
+              ✨ AI-Matched Roles
+            </p>
+            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-['Space_Mono',sans-serif] text-[11px]">
+              from your pitch
+            </span>
+          </div>
+
+          {geminiStatus === "loading" && (
+            <div className="rounded-2xl border border-black/10 bg-white/70 p-6">
+              <p className="font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b] animate-pulse">
+                Analyzing your pitch for the best-fit roles…
+              </p>
+            </div>
+          )}
+
+          {geminiStatus === "error" && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+              <p className="font-['Space_Mono',sans-serif] text-[13px] text-red-500">
+                Could not load AI suggestions. Check your GEMINI_API_KEY.
+              </p>
+            </div>
+          )}
+
+          {geminiStatus === "done" && geminiTitles.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {geminiTitles.map((title) => (
+                <div
+                  key={title}
+                  className="rounded-2xl border border-blue-200 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.08)]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      {/* Show the original Gemini title to the user */}
+                      <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
+                        {title}
+                      </p>
+                      <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px]">
+                        Suggested based on your pitch & skills
+                      </p>
+                    </div>
+                    <span className="shrink-0 px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-['Space_Mono',sans-serif] text-[11px]">
+                      AI
+                    </span>
+                  </div>
+
+                  {/*
+                    Pass simplifyTitle(title) to Adzuna so searches are broader.
+                    e.g. "Senior Family Support Specialist" → "Family Support Assistant"
+                    The card still displays the original Gemini title above.
+                  */}
+                  <LiveListings
+                    jobTitle={simplifyTitle(title)}
+                    remote={answers.constraints.remote}
+                    location={answers.constraints.location}
+                    radiusMiles={answers.constraints.radiusMiles}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Divider between AI and skill-based sections ── */}
+      {answers.notes.trim() && (
+        <div className="flex items-center gap-4 mb-8">
+          <div className="flex-1 h-px bg-black/10" />
+          <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#8b8b8b]">
+            skill-based matches
+          </p>
+          <div className="flex-1 h-px bg-black/10" />
+        </div>
+      )}
+
+      {/* ── Hardcoded Skill-Based Matches ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {matches.map((m) => (
-          <div key={m.job.id} className="rounded-2xl border border-black/10 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]">
+          <div
+            key={m.job.id}
+            className="rounded-2xl border border-black/10 bg-white/70 p-6 shadow-[0px_8px_20px_rgba(0,0,0,0.10)]"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">{m.job.title}</p>
-                <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.5]">{m.job.summary}</p>
+                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[18px]">
+                  {m.job.title}
+                </p>
+                <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[14px] leading-[1.5]">
+                  {m.job.summary}
+                </p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="font-['Press_Start_2P',sans-serif] text-[14px] text-[#0c0c0d]">{m.score}%</p>
+                <p className="font-['Press_Start_2P',sans-serif] text-[14px] text-[#0c0c0d]">
+                  {m.score}%
+                </p>
                 <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#5b5b5b]">match</p>
               </div>
             </div>
@@ -285,10 +442,15 @@ export default function SurveyResults() {
             </div>
 
             <div className="mt-5">
-              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">Why this matches</p>
+              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
+                Why this matches
+              </p>
               <ul className="mt-2 space-y-1">
                 {m.reasons.map((r, i) => (
-                  <li key={i} className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]">
+                  <li
+                    key={i}
+                    className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]"
+                  >
                     • {r}
                   </li>
                 ))}
@@ -297,10 +459,15 @@ export default function SurveyResults() {
 
             {m.gaps.length > 0 && (
               <div className="mt-4">
-                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">Helpful next skills</p>
+                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">
+                  Helpful next skills
+                </p>
                 <ul className="mt-2 space-y-1">
                   {m.gaps.map((g, i) => (
-                    <li key={i} className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]">
+                    <li
+                      key={i}
+                      className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px] leading-[1.5]"
+                    >
                       • {g}
                     </li>
                   ))}
@@ -312,6 +479,7 @@ export default function SurveyResults() {
               Typical training: {m.job.typicalTraining}
             </p>
 
+            {/* Hardcoded titles are already clean — no simplification needed */}
             <LiveListings
               jobTitle={m.job.title}
               remote={answers.constraints.remote}
