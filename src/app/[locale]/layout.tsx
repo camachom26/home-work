@@ -21,7 +21,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <JobPathsProvider>
-        <div className="min-h-screen w-full bg-white">
+        <div className="min-h-screen w-full bg-transparent">
           <Navigation locale={locale} />
           {children}
           <Footer />

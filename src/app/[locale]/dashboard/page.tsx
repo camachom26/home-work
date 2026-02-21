@@ -191,10 +191,10 @@ export default function DashboardPage() {
   return (
     <div
       className="w-full bg-fixed bg-[length:100%_auto] bg-top bg-no-repeat"
-      style={{ backgroundImage: "url('/surveybackground.png')" }}
+      style={{ backgroundImage: "url('/landing/hero.png')" }}
     >
       {/* keep background crisp; light overlay only */}
-      <div className="w-full bg-white/10">
+      <div className="w-full bg-white/5">
         <header className="w-full">
           <div className="mx-auto max-w-7xl px-6 md:px-8 pt-10 md:pt-14 pb-4">
             <div className="rounded-[28px] bg-white/70 backdrop-blur-sm border border-black/10 shadow-[0px_10px_30px_rgba(0,0,0,0.12)] p-6 md:p-10">
@@ -519,13 +519,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-
-            <footer className="mt-8">
-              <p className="font-['Space_Mono',sans-serif] text-[12px] text-black/50">
-                This page matches your existing style: pixel headline, mono body, rounded glass cards, soft shadow, and
-                simple black progress bars.
-              </p>
-            </footer>
           </div>
         </main>
       </div>

@@ -15,16 +15,11 @@ export function SurveyShell({
 }) {
   const pct = Math.round((step / total) * 100);
 
-return (
-  <div
-    className="w-full bg-cover bg-center bg-no-repeat"
-    style={{ backgroundImage: "url('/surveybackground.png')" }}
-  >
-    {/* Optional overlay for readability */}
-    <div className="w-full bg-white/10 backdrop-blur-[0.5px]">
+  return (
+    <div className="w-full">
       <section className="w-full">
         <div className="mx-auto max-w-7xl px-6 md:px-8 pt-10 md:pt-14 pb-4">
-          <div className="rounded-[28px] bg-white/70 backdrop-blur-sm border border-black/10 shadow-[0px_10px_30px_rgba(0,0,0,0.12)] p-6 md:p-10">
+          <div className="rounded-[28px] bg-white/80 backdrop-blur-sm border border-black/10 shadow-[0px_10px_30px_rgba(0,0,0,0.12)] p-6 md:p-10">
             <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[clamp(18px,2.4vw,34px)] leading-[1.2]">
               {title}
             </p>
@@ -60,8 +55,7 @@ return (
         </div>
       </main>
     </div>
-  </div>
-);
+  );
 }
 
 export function PrimaryButton({
@@ -81,7 +75,7 @@ export function PrimaryButton({
       className={[
         "w-full sm:w-auto rounded-full px-6 py-3 transition",
         "font-['Press_Start_2P',sans-serif] text-[12px]",
-        disabled ? "bg-black/30 text-white cursor-not-allowed" : "bg-[#1e1e1e] hover:bg-black text-white"
+        disabled ? "bg-black/70 text-white cursor-not-allowed" : "bg-[#1e1e1e] hover:bg-black text-white"
       ].join(" ")}
     >
       {children}
