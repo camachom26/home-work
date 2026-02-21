@@ -102,6 +102,48 @@ export default function SurveyStep3() {
             ))}
           </div>
         </div>
+
+        <div className="rounded-2xl border border-black/10 bg-white/70 p-5">
+          <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e]">Your location</p>
+          <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px]">
+            City + state or zip code
+          </p>
+          <input
+            type="text"
+            placeholder="e.g. Chicago, IL or 60601"
+            value={answers.constraints.location}
+            onChange={(e) =>
+              setAnswers((prev) => ({
+                ...prev,
+                constraints: { ...prev.constraints, location: e.target.value }
+              }))
+            }
+            className="mt-3 w-full rounded-xl border border-black/15 bg-white px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] placeholder:text-[#9b9b9b] focus:outline-none focus:border-black/40"
+          />
+        </div>
+
+        <div className="rounded-2xl border border-black/10 bg-white/70 p-5">
+          <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e]">Search radius</p>
+          <p className="mt-1 font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px]">
+            How far are you willing to commute?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {([10, 25, 50, 0] as const).map((v) => (
+              <Pill
+                key={v}
+                active={answers.constraints.radiusMiles === v}
+                onClick={() =>
+                  setAnswers((prev) => ({
+                    ...prev,
+                    constraints: { ...prev.constraints, radiusMiles: v }
+                  }))
+                }
+              >
+                {v === 0 ? "Anywhere" : `${v} mi`}
+              </Pill>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">

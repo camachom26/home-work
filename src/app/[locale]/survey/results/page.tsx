@@ -27,54 +27,64 @@ type Match = { job: Job; score: number; reasons: string[]; gaps: string[] };
 
 const JOBS: Job[] = [
   {
-    id: "admin-coordinator",
-    title: "Administrative Coordinator",
-    summary: "Calendar, email, tasks, lightweight ops for a team.",
-    typicalTraining: "Short course (1–4 weeks) or on-the-job training",
-    payRange: [18, 28],
+    id: "front-desk",
+    title: "Front Desk Receptionist",
+    summary: "Greet visitors, answer phones, and schedule appointments at an office, clinic, or hotel.",
+    typicalTraining: "On-the-job training (1–2 weeks)",
+    payRange: [14, 22],
+    remoteFit: "onsite",
+    weights: { communication: 3, scheduling: 3, organization: 2, customerService: 2, attentionToDetail: 2, techComfort: 1 },
+    interestTags: ["Healthcare", "Office/Admin", "Nonprofit"]
+  },
+  {
+    id: "customer-service",
+    title: "Customer Service Representative",
+    summary: "Help customers by phone, chat, or in person — resolve issues and answer questions.",
+    typicalTraining: "On-the-job training (1–3 weeks)",
+    payRange: [15, 25],
+    remoteFit: "remote",
+    weights: { communication: 3, customerService: 3, writing: 2, techComfort: 2, attentionToDetail: 1 },
+    interestTags: ["Retail/Service", "Tech"]
+  },
+  {
+    id: "retail-associate",
+    title: "Retail Sales Associate",
+    summary: "Assist shoppers, process transactions, stock shelves, and keep the store organized.",
+    typicalTraining: "On-the-job training (a few days to 1 week)",
+    payRange: [13, 20],
+    remoteFit: "onsite",
+    weights: { customerService: 3, communication: 3, organization: 2, attentionToDetail: 1 },
+    interestTags: ["Retail/Service"]
+  },
+  {
+    id: "office-admin",
+    title: "Office Administrative Assistant",
+    summary: "Handle data entry, filing, scheduling, and day-to-day tasks for a team or office.",
+    typicalTraining: "On-the-job or short course (2–6 weeks)",
+    payRange: [16, 28],
     remoteFit: "hybrid",
-    weights: { scheduling: 3, communication: 3, organization: 3, attentionToDetail: 2, techComfort: 2, writing: 1 },
+    weights: { organization: 3, scheduling: 3, attentionToDetail: 3, techComfort: 2, writing: 2, communication: 1 },
     interestTags: ["Office/Admin", "Nonprofit", "Tech"]
   },
   {
-    id: "bookkeeping-assistant",
-    title: "Bookkeeping Assistant",
-    summary: "Track invoices, reconcile expenses, basic accounting support.",
-    typicalTraining: "Course/cert (4–12 weeks) or community college module",
-    payRange: [20, 32],
+    id: "bookkeeper",
+    title: "Bookkeeper",
+    summary: "Track income and expenses, manage invoices, and keep financial records accurate.",
+    typicalTraining: "Course or certification (4–12 weeks), or self-study",
+    payRange: [18, 32],
     remoteFit: "remote",
     weights: { budgeting: 3, attentionToDetail: 3, organization: 2, techComfort: 2, communication: 1 },
-    interestTags: ["Office/Admin", "Nonprofit", "Tech"]
+    interestTags: ["Office/Admin", "Nonprofit"]
   },
   {
-    id: "customer-support",
-    title: "Customer Support Specialist",
-    summary: "Help customers via chat/email, troubleshooting and empathy.",
-    typicalTraining: "On-the-job training (1–3 weeks)",
-    payRange: [17, 27],
-    remoteFit: "remote",
-    weights: { communication: 3, customerService: 3, techComfort: 2, writing: 2, attentionToDetail: 1 },
-    interestTags: ["Tech", "Retail/Service"]
-  },
-  {
-    id: "teacher-assistant",
-    title: "Teacher Assistant / Tutor",
-    summary: "Support learning, small groups, structured guidance.",
-    typicalTraining: "Background check + short training; some roles require credits",
-    payRange: [15, 24],
+    id: "teacher-aide",
+    title: "Teacher Aide",
+    summary: "Support classroom instruction, work with small groups, and help students with learning tasks.",
+    typicalTraining: "Background check + orientation; some roles require coursework",
+    payRange: [13, 22],
     remoteFit: "onsite",
-    weights: { teaching: 3, communication: 2, organization: 2, caretaking: 2, attentionToDetail: 1 },
+    weights: { teaching: 3, caretaking: 2, communication: 2, organization: 2, attentionToDetail: 1 },
     interestTags: ["Education", "Nonprofit"]
-  },
-  {
-    id: "medical-front-desk",
-    title: "Medical Front Desk / Intake",
-    summary: "Scheduling, forms, patient communication, insurance basics.",
-    typicalTraining: "On-the-job training (2–6 weeks); optional certificate",
-    payRange: [17, 26],
-    remoteFit: "onsite",
-    weights: { communication: 3, scheduling: 3, attentionToDetail: 2, organization: 2, customerService: 2, techComfort: 1 },
-    interestTags: ["Healthcare", "Office/Admin"]
   }
 ];
 
@@ -143,16 +153,21 @@ function matchJobs(answers: Answers): Match[] {
   }).sort((a, b) => b.score - a.score);
 }
 
-type LiveListingsProps = { jobTitle: string; remote: string };
+type LiveListingsProps = { jobTitle: string; remote: string; location: string; radiusMiles: number };
 
-function LiveListings({ jobTitle, remote }: LiveListingsProps) {
+function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsProps) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [jobs, setJobs] = useState<LiveJob[]>([]);
 
   const load = useCallback(async () => {
     setState("loading");
     try {
-      const params = new URLSearchParams({ query: jobTitle, remote });
+      const params = new URLSearchParams({
+        query: jobTitle,
+        remote,
+        location,
+        radiusMiles: String(radiusMiles),
+      });
       const res = await fetch(`/api/jobs?${params.toString()}`);
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json() as { jobs: LiveJob[] };
@@ -161,7 +176,7 @@ function LiveListings({ jobTitle, remote }: LiveListingsProps) {
     } catch {
       setState("error");
     }
-  }, [jobTitle, remote]);
+  }, [jobTitle, remote, location, radiusMiles]);
 
   if (state === "idle") {
     return (
@@ -186,7 +201,7 @@ function LiveListings({ jobTitle, remote }: LiveListingsProps) {
   if (state === "error") {
     return (
       <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-red-500">
-        Could not load listings. Check your JSEARCH_API_KEY.
+        Could not load listings. Check your ADZUNA_APP_ID / ADZUNA_APP_KEY.
       </p>
     );
   }
@@ -295,7 +310,12 @@ export default function SurveyResults() {
               Typical training: {m.job.typicalTraining}
             </p>
 
-            <LiveListings jobTitle={m.job.title} remote={answers.constraints.remote} />
+            <LiveListings
+              jobTitle={m.job.title}
+              remote={answers.constraints.remote}
+              location={answers.constraints.location}
+              radiusMiles={answers.constraints.radiusMiles}
+            />
           </div>
         ))}
       </div>

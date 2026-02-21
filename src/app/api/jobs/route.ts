@@ -15,61 +15,94 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const query = searchParams.get("query");
   const remote = searchParams.get("remote");
+  const location = searchParams.get("location") ?? "";
+  const radiusMiles = searchParams.get("radiusMiles") ?? "0";
 
   if (!query) {
     return NextResponse.json({ error: "query param required" }, { status: 400 });
   }
 
-  const apiKey = process.env.JSEARCH_API_KEY;
-  if (!apiKey || apiKey === "REPLACE_WITH_YOUR_RAPIDAPI_KEY") {
-    return NextResponse.json({ error: "JSEARCH_API_KEY not configured" }, { status: 503 });
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) {
+    return NextResponse.json({ error: "ADZUNA_APP_ID or ADZUNA_APP_KEY not configured" }, { status: 503 });
   }
 
+  // For remote preference, append "remote" to the search so Adzuna surfaces remote listings
+  const what = remote === "remote" ? `${query} remote` : query;
+
   const params = new URLSearchParams({
-    query,
-    page: "1",
-    num_pages: "1",
-    date_posted: "month",
+    app_id: appId,
+    app_key: appKey,
+    what,
+    results_per_page: "10", // fetch more for title filtering
+    sort_by: "date",
   });
-  if (remote === "remote") params.set("remote_jobs_only", "true");
+
+  if (location) params.set("where", location);
+
+  // Adzuna uses km; convert miles → km
+  const radiusNum = parseInt(radiusMiles, 10);
+  if (radiusNum > 0) {
+    params.set("distance", String(Math.round(radiusNum * 1.60934)));
+  }
 
   const res = await fetch(
-    `https://jsearch27.p.rapidapi.com/search?${params.toString()}`,
-    {
-      headers: {
-        "X-RapidAPI-Key": apiKey,
-        "X-RapidAPI-Host": "jsearch27.p.rapidapi.com",
-      },
-      next: { revalidate: 3600 }, // cache for 1 hour to save quota
-    }
+    `https://api.adzuna.com/v1/api/jobs/us/search/1?${params.toString()}`,
+    { next: { revalidate: 3600 } } // cache 1 hour to conserve daily quota
   );
 
   if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`Adzuna ${res.status}:`, body);
     return NextResponse.json(
-      { error: `JSearch returned ${res.status}` },
+      { error: `Adzuna returned ${res.status}` },
       { status: 502 }
     );
   }
 
   const data = await res.json();
 
-  const jobs: LiveJob[] = (data.data ?? []).slice(0, 5).map(
-    (j: Record<string, unknown>) => ({
-      id: j.job_id as string,
-      title: j.job_title as string,
-      company: j.employer_name as string,
-      location:
-        j.job_city && j.job_state
-          ? `${j.job_city}, ${j.job_state}`
-          : j.job_is_remote
-            ? "Remote"
-            : (j.job_country as string) ?? "—",
-      isRemote: Boolean(j.job_is_remote),
-      applyUrl: (j.job_apply_link as string) ?? "#",
-      publisher: (j.job_publisher as string) ?? "",
-      postedAt: (j.job_posted_at_datetime_utc as string) ?? null,
-    })
-  );
+  type AdzunaJob = {
+    id: string;
+    title: string;
+    company?: { display_name?: string };
+    location?: { display_name?: string };
+    redirect_url?: string;
+    created?: string;
+  };
+
+  const allJobs: LiveJob[] = (data.results ?? []).map((j: AdzunaJob) => {
+    const titleLower = (j.title ?? "").toLowerCase();
+    return {
+      id: String(j.id),
+      title: j.title ?? "",
+      company: j.company?.display_name ?? "Unknown",
+      location: j.location?.display_name ?? "—",
+      isRemote: titleLower.includes("remote"),
+      applyUrl: j.redirect_url ?? "#",
+      publisher: "Adzuna",
+      postedAt: j.created ?? null,
+    };
+  });
+
+  // Title relevance: 4-char stems from words ≥ 4 chars.
+  // "Front" → "fron", "Desk" → "desk"
+  // Only the primary segment (before " - ") is checked.
+  const queryStems = query
+    .toLowerCase()
+    .split(/[\s/]+/)
+    .filter((w) => w.length >= 4)
+    .map((w) => w.slice(0, 4));
+  const isTitleRelevant = (title: string) => {
+    if (queryStems.length === 0) return true;
+    const primary = title.split(/\s*[-–]\s*/)[0].toLowerCase();
+    return queryStems.some((stem) => primary.includes(stem));
+  };
+
+  const jobs = allJobs
+    .filter((j) => isTitleRelevant(j.title))
+    .slice(0, 5);
 
   return NextResponse.json({ jobs });
 }

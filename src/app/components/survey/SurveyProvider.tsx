@@ -20,6 +20,8 @@ export type Constraint = {
   schedule: "weekday" | "evening" | "weekend" | "flexible";
   remote: "remote" | "hybrid" | "onsite" | "no-pref";
   experience: "0-1" | "1-3" | "3-5" | "5+";
+  location: string;
+  radiusMiles: 10 | 25 | 50 | 0;
 };
 
 export type Answers = {
@@ -37,7 +39,9 @@ const DEFAULT_ANSWERS: Answers = {
     trainingBudget: "250-1000",
     schedule: "flexible",
     remote: "no-pref",
-    experience: "1-3"
+    experience: "1-3",
+    location: "",
+    radiusMiles: 25
   },
   notes: ""
 };
