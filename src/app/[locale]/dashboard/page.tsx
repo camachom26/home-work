@@ -3,6 +3,7 @@
 import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
+import { useSurvey } from "@/app/components/survey/SurveyProvider";
 
 type Stat = { label: string; value: string; sub?: string };
 
@@ -111,6 +112,7 @@ function SecondaryButton({
 export default function DashboardPage() {
   const router = useRouter();
   const { chosenJobs, removeJobPath, savedResources, removeTrainingResource } = useJobPaths();
+  const { answers } = useSurvey();
 
   const jobPathsRef = useRef<HTMLDivElement>(null);
   const snapshotRef = useRef<HTMLDivElement>(null);
@@ -120,11 +122,55 @@ export default function DashboardPage() {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const userName = "Mia";
+  const userName = "there";
+
+  const trainingBudgetLabel: Record<string, string> = {
+    "0-250": "$0 – $250",
+    "250-1000": "$250 – $1,000",
+    "1000-3000": "$1,000 – $3,000",
+    "3000+": "$3,000+",
+  };
+
+  // Upper bound of each budget range (used for the progress bar)
+  const trainingBudgetMax: Record<string, number> = {
+    "0-250": 250,
+    "250-1000": 1000,
+    "1000-3000": 3000,
+    "3000+": 3000,
+  };
+
+  // Parse cost strings like "~$100 exam fee", "Free to audit", "~$49/month" → number
+  function parseCost(cost: string): number {
+    if (/free|no cost/i.test(cost)) return 0;
+    if (/varies/i.test(cost)) return 0;
+    const match = cost.match(/\$(\d[\d,]*)/);
+    if (match) return parseFloat(match[1].replace(/,/g, ""));
+    return 0;
+  }
+
+  const totalTrainingCost = useMemo(
+    () => savedResources.reduce((sum, r) => sum + parseCost(r.cost), 0),
+    [savedResources]
+  );
+
+  const budgetMax = trainingBudgetMax[answers.constraints.trainingBudget] ?? 1000;
+  const budgetPct = Math.min(totalTrainingCost / budgetMax, 1);
+  const overBudget = totalTrainingCost > budgetMax;
 
   const stats: Stat[] = useMemo(
-    () => [{ label: "Monthly Budget", value: "$1,650", sub: "Planned spending" }],
-    []
+    () => [
+      {
+        label: "Minimum Wage",
+        value: `$${answers.constraints.minWage}/hr`,
+        sub: "Minimum acceptable hourly pay",
+      },
+      {
+        label: "Training Budget",
+        value: trainingBudgetLabel[answers.constraints.trainingBudget] ?? answers.constraints.trainingBudget,
+        sub: "Budget set for upskilling & courses",
+      },
+    ],
+    [answers.constraints.minWage, answers.constraints.trainingBudget]
   );
 
   return (
@@ -234,6 +280,46 @@ export default function DashboardPage() {
                   {stats.map((s) => (
                     <StatCard key={s.label} stat={s} />
                   ))}
+                </div>
+
+                {/* Training spend widget */}
+                <div className="mt-6 rounded-[22px] bg-white/70 border border-black/10 shadow-[0px_10px_25px_rgba(0,0,0,0.08)] p-5">
+                  <div className="flex items-center justify-between gap-4 mb-3">
+                    <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">
+                      Training Spend
+                    </p>
+                    <p className={cn(
+                      "font-['Press_Start_2P',sans-serif] text-[14px] leading-[1.2]",
+                      overBudget ? "text-red-500" : "text-[#0c0c0d]"
+                    )}>
+                      ${totalTrainingCost.toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full h-3 rounded-full bg-black/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        overBudget ? "bg-red-400" : budgetPct > 0.75 ? "bg-yellow-400" : "bg-green-400"
+                      )}
+                      style={{ width: `${budgetPct * 100}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[11px]">
+                      {savedResources.length} course{savedResources.length !== 1 ? "s" : ""} selected
+                    </p>
+                    <p className={cn(
+                      "font-['Space_Mono',sans-serif] text-[11px]",
+                      overBudget ? "text-red-500" : "text-[#8b8b8b]"
+                    )}>
+                      {overBudget
+                        ? `$${(totalTrainingCost - budgetMax).toLocaleString()} over budget`
+                        : `$${(budgetMax - totalTrainingCost).toLocaleString()} remaining`}
+                    </p>
+                  </div>
                 </div>
               </Card>
             </div>

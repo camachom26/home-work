@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import jobsData from "@/app/data/jobs.json";
 
 export type SkillId =
@@ -205,31 +206,64 @@ function parsePitch(notes: string): { skills: SkillId[]; interests: string[] } {
 ---------------------------- */
 
 export function SurveyProvider({ children }: { children: React.ReactNode }) {
+  const { userId, isLoaded: authLoaded } = useAuth();
   const [answers, setAnswers] = useState<Answers>(DEFAULT_ANSWERS);
+  const [loaded, setLoaded] = useState(false);
 
   // Jobs source (today: JSON; later: swap to fetch)
   const jobs = useMemo(() => (jobsData as Job[]) ?? [], []);
 
-  // Load from localStorage once
+  // Load: MongoDB if signed in, localStorage otherwise
   useEffect(() => {
+    if (!authLoaded) return;
+
+    // Reset before loading so stale data from a previous user isn't persisted
+    setAnswers(DEFAULT_ANSWERS);
+    setLoaded(false);
+
+    if (userId) {
+      fetch("/api/user/data")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.surveyAnswers?.constraints?.minWage != null) {
+            setAnswers(data.surveyAnswers);
+          } else {
+            loadFromLocalStorage();
+          }
+        })
+        .catch(() => loadFromLocalStorage())
+        .finally(() => setLoaded(true));
+    } else {
+      loadFromLocalStorage();
+      setLoaded(true);
+    }
+  }, [authLoaded, userId]);
+
+  function loadFromLocalStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw) as Answers;
       if (parsed?.constraints?.minWage != null) setAnswers(parsed);
-    } catch {
-      // ignore
-    }
-  }, []);
+    } catch { /* ignore */ }
+  }
 
-  // Persist on change
+  // Persist on change (after initial load)
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
-    } catch {
-      // ignore
+    if (!loaded) return;
+
+    if (userId) {
+      fetch("/api/user/data", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ surveyAnswers: answers }),
+      }).catch(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(answers)); } catch { /* ignore */ }
+      });
+    } else {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(answers)); } catch { /* ignore */ }
     }
-  }, [answers]);
+  }, [answers, loaded, userId]);
 
   const toggleSkill = (id: SkillId) => {
     setAnswers((prev) => {

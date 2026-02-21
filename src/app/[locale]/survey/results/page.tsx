@@ -330,9 +330,89 @@ export default function SurveyResults() {
     <SurveyShell
       title="Survey → Job Match"
       subtitle="Results: ranked by skills, interests, and constraints."
+      
+      // how do i add an executive summary that highlights key insights from the matches? maybe a bullet list of top reasons for the best match, or a summary of skill gaps to work on? 
+      // also provide the pitch the user gave, and their initial constraints, so they can see how those influenced the results and tweak them if needed?
       step={4}
       total={4}
     >
+      {/* ── Executive Summary ── */}
+<div className="mb-10 rounded-2xl border border-black/10 bg-white/70 p-7 shadow-[0px_8px_20px_rgba(0,0,0,0.08)]">
+  <p className="font-['Space_Mono',sans-serif] font-bold text-[16px] text-[#1e1e1e] mb-4">
+    Your Results at a Glance
+  </p>
+
+  {/* Top match callout */}
+  {matches[0] && (
+    <div className="mb-5 rounded-xl bg-black/5 px-5 py-4">
+      <p className="font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e]">
+        <span className="font-bold">Top match:</span> {matches[0].job.title} ({matches[0].score}%)
+      </p>
+      <ul className="mt-2 space-y-1">
+        {matches[0].reasons.map((r, i) => (
+          <li key={i} className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">• {r}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {/* Skill gaps across all top matches */}
+  {(() => {
+    const allGaps = Array.from(
+      new Set(matches.slice(0, 3).flatMap((m) => m.gaps))
+    ).slice(0, 4);
+    return allGaps.length > 0 ? (
+      <div className="mb-5">
+        <p className="font-['Space_Mono',sans-serif] font-bold text-[13px] text-[#1e1e1e] mb-2">
+          Skills To Build for Better Matches
+        </p>
+        <ul className="space-y-1">
+          {allGaps.map((g, i) => (
+            <li key={i} className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">• {g}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+  })()}
+
+  {/* User's pitch */}
+  {answers.notes.trim() && (
+    <div className="mb-5">
+      <p className="font-['Space_Mono',sans-serif] font-bold text-[13px] text-[#1e1e1e] mb-1">
+        Your Pitch
+      </p>
+      <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b] leading-[1.6] italic">
+        "{answers.notes.trim()}"
+      </p>
+    </div>
+  )}
+
+  {/* Constraints summary */}
+  <div>
+    <p className="font-['Space_Mono',sans-serif] font-bold text-[13px] text-[#1e1e1e] mb-2">
+      Your Constraints
+    </p>
+    <div className="flex flex-wrap gap-2">
+      <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+        min wage: ${answers.constraints.minWage}/hr
+      </span>
+      <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+        {answers.constraints.remote === "no-pref" ? "Any location" : answers.constraints.remote}
+      </span>
+      {answers.constraints.location && (
+        <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+          📍 {answers.constraints.location}
+        </span>
+      )}
+      {answers.constraints.radiusMiles && (
+        <span className="px-3 py-1 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e]">
+          within {answers.constraints.radiusMiles} mi
+        </span>
+      )}
+    </div>
+  </div>
+</div>
+
       {/* ── Gemini AI Section (only shown if user wrote a pitch) ── */}
       {answers.notes.trim() && (
         <div className="mb-10">
