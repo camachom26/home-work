@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { SurveyShell, SecondaryButton } from "@/app/components/survey/SurveyShell";
+import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 
 type Resource = {
   name: string;
@@ -242,8 +243,9 @@ const JOB_RESOURCES: Record<string, { title: string; intro: string; resources: R
 export default function ResourcesPage() {
   const params = useParams();
   const router = useRouter();
-  const jobId = Array.isArray(params.jobId) ? params.jobId[0] : (params.jobId ?? "");
+  const { savedResources, addTrainingResource, removeTrainingResource } = useJobPaths();
 
+  const jobId = Array.isArray(params.jobId) ? params.jobId[0] : (params.jobId ?? "");
   const data = JOB_RESOURCES[jobId];
 
   if (!data) {
@@ -266,42 +268,73 @@ export default function ResourcesPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {data.resources.map((r) => (
-          <a
-            key={r.name}
-            href={r.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group rounded-2xl border border-black/10 bg-white/70 hover:bg-white p-5 shadow-[0px_4px_12px_rgba(0,0,0,0.07)] transition flex flex-col gap-3"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[14px] leading-[1.4] group-hover:underline">
-                {r.name}
-              </p>
-              {r.badge && (
-                <span className="shrink-0 px-2 py-0.5 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[11px] text-[#1e1e1e] whitespace-nowrap">
-                  {r.badge}
-                </span>
-              )}
-            </div>
+        {data.resources.map((r) => {
+          const resourceId = `${jobId}::${r.name}`;
+          const isSaved = savedResources.some((s) => s.id === resourceId);
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">
-                {r.provider}
-              </p>
-              <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">
-                {r.cost}
-              </p>
-              <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">
-                {r.duration}
-              </p>
-            </div>
+          return (
+            <div
+              key={r.name}
+              className="rounded-2xl border border-black/10 bg-white/70 p-5 shadow-[0px_4px_12px_rgba(0,0,0,0.07)] flex flex-col gap-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[14px] leading-[1.4]">
+                  {r.name}
+                </p>
+                {r.badge && (
+                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-black/10 font-['Space_Mono',sans-serif] text-[11px] text-[#1e1e1e] whitespace-nowrap">
+                    {r.badge}
+                  </span>
+                )}
+              </div>
 
-            <p className="mt-auto font-['Space_Mono',sans-serif] text-[12px] text-[#1e1e1e] group-hover:underline">
-              View →
-            </p>
-          </a>
-        ))}
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">{r.provider}</p>
+                <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">{r.cost}</p>
+                <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">{r.duration}</p>
+              </div>
+
+              <div className="mt-auto flex flex-col sm:flex-row gap-2 pt-2">
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto rounded-full border border-black/30 bg-white/70 hover:bg-white px-5 py-2 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] text-center transition"
+                >
+                  View →
+                </a>
+                {isSaved ? (
+                  <button
+                    type="button"
+                    onClick={() => removeTrainingResource(resourceId)}
+                    className="w-full sm:w-auto rounded-full px-5 py-2 font-['Space_Mono',sans-serif] text-[13px] bg-black/10 text-[#4b4b4b] border border-black/10 transition hover:bg-black/15"
+                  >
+                    ✓ Added to Training
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addTrainingResource({
+                        id: resourceId,
+                        name: r.name,
+                        provider: r.provider,
+                        cost: r.cost,
+                        duration: r.duration,
+                        url: r.url,
+                        badge: r.badge,
+                        jobTitle: data.title,
+                      })
+                    }
+                    className="w-full sm:w-auto rounded-full px-5 py-2 font-['Space_Mono',sans-serif] text-[13px] bg-[#1e1e1e] hover:bg-black text-white transition"
+                  >
+                    Add to Training
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-8">
