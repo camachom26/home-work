@@ -535,8 +535,9 @@ export default function SurveyResults() {
       </div>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
-        <SecondaryButton onClick={() => router.push("step-3")}>Back</SecondaryButton>
-        <PrimaryButton onClick={() => router.push("step-1")}>Start over</PrimaryButton>
+        <PrimaryButton onClick={() => router.push("step-3")}>Back</PrimaryButton>
+        <SecondaryButton onClick={() => router.push("step-1")}>Start over</SecondaryButton>
+        <PrimaryButton onClick={() => router.push("/dashboard")}> Go to Dashboard → </PrimaryButton>
       </div>
 
     </SurveyShell>
