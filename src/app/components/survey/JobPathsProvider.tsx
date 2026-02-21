@@ -12,35 +12,54 @@ export type ChosenJob = {
   addedAt: string;
 };
 
+export type SavedResource = {
+  id: string;
+  name: string;
+  provider: string;
+  cost: string;
+  duration: string;
+  url: string;
+  badge?: string;
+  jobTitle: string;
+  addedAt: string;
+};
+
 type JobPathsCtx = {
   chosenJobs: ChosenJob[];
   addJobPath: (job: Omit<ChosenJob, "addedAt">) => void;
   removeJobPath: (id: string) => void;
+  savedResources: SavedResource[];
+  addTrainingResource: (resource: Omit<SavedResource, "addedAt">) => void;
+  removeTrainingResource: (id: string) => void;
 };
 
 const JobPathsContext = createContext<JobPathsCtx | null>(null);
 
-const STORAGE_KEY = "home-work.job-paths.v1";
+const JOBS_KEY = "home-work.job-paths.v1";
+const RESOURCES_KEY = "home-work.training-resources.v1";
 
 export function JobPathsProvider({ children }: { children: React.ReactNode }) {
   const [chosenJobs, setChosenJobs] = useState<ChosenJob[]>([]);
+  const [savedResources, setSavedResources] = useState<SavedResource[]>([]);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(JOBS_KEY);
       if (raw) setChosenJobs(JSON.parse(raw) as ChosenJob[]);
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
+    try {
+      const raw = localStorage.getItem(RESOURCES_KEY);
+      if (raw) setSavedResources(JSON.parse(raw) as SavedResource[]);
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(chosenJobs));
-    } catch {
-      // ignore
-    }
+    try { localStorage.setItem(JOBS_KEY, JSON.stringify(chosenJobs)); } catch { /* ignore */ }
   }, [chosenJobs]);
+
+  useEffect(() => {
+    try { localStorage.setItem(RESOURCES_KEY, JSON.stringify(savedResources)); } catch { /* ignore */ }
+  }, [savedResources]);
 
   const addJobPath = (job: Omit<ChosenJob, "addedAt">) => {
     setChosenJobs((prev) => {
@@ -53,9 +72,20 @@ export function JobPathsProvider({ children }: { children: React.ReactNode }) {
     setChosenJobs((prev) => prev.filter((j) => j.id !== id));
   };
 
+  const addTrainingResource = (resource: Omit<SavedResource, "addedAt">) => {
+    setSavedResources((prev) => {
+      if (prev.some((r) => r.id === resource.id)) return prev;
+      return [...prev, { ...resource, addedAt: new Date().toISOString() }];
+    });
+  };
+
+  const removeTrainingResource = (id: string) => {
+    setSavedResources((prev) => prev.filter((r) => r.id !== id));
+  };
+
   const value = useMemo(
-    () => ({ chosenJobs, addJobPath, removeJobPath }),
-    [chosenJobs]
+    () => ({ chosenJobs, addJobPath, removeJobPath, savedResources, addTrainingResource, removeTrainingResource }),
+    [chosenJobs, savedResources]
   );
 
   return <JobPathsContext.Provider value={value}>{children}</JobPathsContext.Provider>;
