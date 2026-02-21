@@ -1,13 +1,11 @@
-// src/app/[locale]/layout.tsx
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/routing";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
 
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
+import { SurveyProvider } from "@/app/components/survey/SurveyProvider";
 
-export default async function LocaleLayout({
+export default async function SurveyLayout({
   children,
   params
 }: {
@@ -15,15 +13,13 @@ export default async function LocaleLayout({
   params: Promise<{ locale: Locale }>;
 }) {
   const { locale } = await params;
-  const messages = await getMessages({ locale });
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <SurveyProvider>
       <div className="min-h-screen w-full bg-white">
-        <Navigation locale={locale} />
         {children}
         <Footer />
       </div>
-    </NextIntlClientProvider>
+    </SurveyProvider>
   );
 }

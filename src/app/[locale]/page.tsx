@@ -6,5 +6,5 @@ export default async function LocaleHome({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  redirect(`/${locale}/examples/landing`);
+  redirect(`/${locale}/landing`);
 }

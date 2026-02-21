@@ -1,16 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero({
   title = "Home --> Work",
   subtitle = "Welcome to the next chapter of your life!",
   ctaLabel = "Get Started!",
+  locale,
   onCtaClick,
 }: {
   title?: string;
   subtitle?: string;
   ctaLabel?: string;
+  locale: string
   onCtaClick?: () => void;
 }) {
   return (
@@ -38,15 +41,12 @@ export default function Hero({
 
       {/* ✅ Center CTA */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <button
-          type="button"
-          onClick={onCtaClick}
-          className="bg-[#1e1e1e] h-[40px] rounded-[10px] w-[190px] shadow-[0px_4px_8px_rgba(0,0,0,0.25)] hover:scale-[1.02] active:scale-[0.99] transition"
+        <Link
+          href={`/${locale}/survey`}
+          className="bg-[#1e1e1e] hover:bg-black text-white rounded-[8px] px-6 py-3 font-['Space_Mono',sans-serif] text-[16px]"
         >
-          <span className="font-['Space_Mono',sans-serif] text-[#f5f5f5] text-[16px] leading-none">
-            {ctaLabel}
-          </span>
-        </button>
+          Get Started!
+        </Link>
       </div>
     </section>
   );
