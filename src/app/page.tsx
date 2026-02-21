@@ -1,7 +1,6 @@
-import ExamplesLandingPage from "./[locale]/examples/landing/page"
+import { redirect } from "next/navigation";
 
-export default function App() {
-  return (
-    <ExamplesLandingPage />
-  );
+export default function Home() {
+  // send users to landing page
+  redirect("/en/examples/landing"); // or "/examples/landing" if you later choose localePrefix: "as-needed"
 }

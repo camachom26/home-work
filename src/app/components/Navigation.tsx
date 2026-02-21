@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { locales, type Locale } from "../../i18n/routing";
+import { locales, type Locale } from "@/i18n/routing";
 
 /**
  * Navigation features:
