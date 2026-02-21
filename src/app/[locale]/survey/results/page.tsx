@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSurvey } from "@/app/components/survey/SurveyProvider";
 import { SurveyShell, PrimaryButton, SecondaryButton } from "@/app/components/survey/SurveyShell";
+import type { LiveJob } from "@/app/api/jobs/route";
 
 /** Same JOBS + matcher logic as before, moved into this file for simplicity.
  * If you want, we can move it to app/components/survey/matching.ts
@@ -142,6 +143,94 @@ function matchJobs(answers: Answers): Match[] {
   }).sort((a, b) => b.score - a.score);
 }
 
+type LiveListingsProps = { jobTitle: string; remote: string };
+
+function LiveListings({ jobTitle, remote }: LiveListingsProps) {
+  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [jobs, setJobs] = useState<LiveJob[]>([]);
+
+  const load = useCallback(async () => {
+    setState("loading");
+    try {
+      const params = new URLSearchParams({ query: jobTitle, remote });
+      const res = await fetch(`/api/jobs?${params.toString()}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json() as { jobs: LiveJob[] };
+      setJobs(data.jobs);
+      setState("done");
+    } catch {
+      setState("error");
+    }
+  }, [jobTitle, remote]);
+
+  if (state === "idle") {
+    return (
+      <button
+        type="button"
+        onClick={load}
+        className="mt-5 w-full rounded-xl border border-black/15 bg-white/60 hover:bg-white px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] transition"
+      >
+        Find real listings →
+      </button>
+    );
+  }
+
+  if (state === "loading") {
+    return (
+      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b] animate-pulse">
+        Searching jobs…
+      </p>
+    );
+  }
+
+  if (state === "error") {
+    return (
+      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-red-500">
+        Could not load listings. Check your JSEARCH_API_KEY.
+      </p>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b]">
+        No listings found right now.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-5 space-y-2">
+      <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">Real listings</p>
+      {jobs.map((j) => (
+        <a
+          key={j.id}
+          href={j.applyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start justify-between gap-3 rounded-xl border border-black/10 bg-white/60 hover:bg-white px-4 py-3 transition group"
+        >
+          <div className="min-w-0">
+            <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px] truncate group-hover:underline">
+              {j.title}
+            </p>
+            <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px] mt-0.5">
+              {j.company} · {j.location}
+              {j.isRemote && " · Remote"}
+            </p>
+            {j.publisher && (
+              <p className="font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[11px] mt-0.5">
+                via {j.publisher}
+              </p>
+            )}
+          </div>
+          <span className="shrink-0 mt-0.5 font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">Apply →</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
@@ -205,6 +294,8 @@ export default function SurveyResults() {
             <p className="mt-5 font-['Space_Mono',sans-serif] text-[#5b5b5b] text-[12px] leading-[1.5]">
               Typical training: {m.job.typicalTraining}
             </p>
+
+            <LiveListings jobTitle={m.job.title} remote={answers.constraints.remote} />
           </div>
         ))}
       </div>
