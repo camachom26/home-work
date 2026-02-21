@@ -142,7 +142,6 @@ export default function Navigation({ locale }: { locale: Locale }) {
 
         {/* Mobile controls */}
         <div className="md:hidden flex items-center gap-3">
-          {/* ✅ existing dropdown/globe LocaleSwitcher */}
           <LocaleSwitcher currentLocale={locale} />
 
           <button
