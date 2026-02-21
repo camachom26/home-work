@@ -11,7 +11,6 @@ export default function Footer() {
                 <p className="font-['Press_Start_2P',sans-serif] text-[12px] text-[#1e1e1e]">
                 Home → Work
                 </p>
-
                 <div className="flex gap-3">
                 <div className="h-8 w-8 rounded-lg bg-black/10" aria-hidden="true" />
                 <div className="h-8 w-8 rounded-lg bg-black/10" aria-hidden="true" />
