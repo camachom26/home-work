@@ -3,17 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { locales, type Locale } from "@/i18n/routing";
+import type { Locale } from "@/i18n/routing";
+import { LocaleSwitcher } from "@/app/components/LocaleSwitcher";
 
 /**
  * Navigation features:
  * - Sticky scroll behavior (adds shadow/backdrop on scroll)
  * - Mobile hamburger menu (drawer-style)
  * - Clerk auth integration (Sign in + User button)
- * - Language switcher (next-intl locale prefix URLs)
+ * - Language switcher (dropdown with globe)
  */
 
 function useScrolled(threshold = 8) {
@@ -29,48 +29,22 @@ function useScrolled(threshold = 8) {
   return scrolled;
 }
 
-function stripLocale(pathname: string) {
-  // removes leading /en or /es
-  return pathname.replace(new RegExp(`^/(${locales.join("|")})(?=/|$)`), "");
-}
-
-function LocaleSwitcher({ currentLocale }: { currentLocale: Locale }) {
-  const pathname = usePathname();
-  const rest = stripLocale(pathname || "/");
-
-  return (
-    <div className="flex items-center gap-2">
-      {locales.map((loc) => (
-        <Link
-          key={loc}
-          href={`/${loc}${rest || "/"}`}
-          className={[
-            "px-2 py-1 rounded-md text-[12px] font-['Space_Mono',sans-serif] border",
-            loc === currentLocale ? "bg-black text-white border-black" : "bg-white/60 border-black/20 hover:bg-black/5",
-          ].join(" ")}
-          aria-current={loc === currentLocale ? "page" : undefined}
-        >
-          {loc.toUpperCase()}
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function NavLinks({
   onNavigate,
   className,
+  locale
 }: {
   onNavigate?: () => void;
   className?: string;
+  locale: Locale;
 }) {
   const links = useMemo(
     () => [
-      { href: "/about", label: "About" },
-      { href: "/resources", label: "Resources" },
-      { href: "/feedback", label: "Feedback" },
+      { href: `/${locale}/about`, label: "About" },
+      { href: `/${locale}/resources`, label: "Resources" },
+      { href: `/${locale}/feedback`, label: "Feedback" }
     ],
-    []
+    [locale]
   );
 
   return (
@@ -89,7 +63,7 @@ function NavLinks({
   );
 }
 
-function AuthArea({ onNavigate }: { onNavigate?: () => void }) {
+function AuthArea({ onNavigate, locale }: { onNavigate?: () => void; locale: Locale }) {
   return (
     <div className="flex items-center gap-3">
       <SignedOut>
@@ -102,8 +76,10 @@ function AuthArea({ onNavigate }: { onNavigate?: () => void }) {
           </button>
         </SignInButton>
 
+        {/* If you actually have /[locale]/register, keep this.
+            If you use Clerk's /sign-up, swap to `href={`/${locale}/sign-up`}` or `/sign-up` based on your setup. */}
         <Link
-          href="/register"
+          href={`/${locale}/register`}
           onClick={onNavigate}
           className="bg-[#2c2c2c] px-4 py-2 rounded-[8px] font-['Space_Mono',sans-serif] text-[16px] text-[#f5f5f5]"
         >
@@ -112,7 +88,7 @@ function AuthArea({ onNavigate }: { onNavigate?: () => void }) {
       </SignedOut>
 
       <SignedIn>
-        <UserButton afterSignOutUrl="/" />
+        <UserButton afterSignOutUrl={`/${locale}`} />
       </SignedIn>
     </div>
   );
@@ -134,14 +110,20 @@ export default function Navigation({ locale }: { locale: Locale }) {
     <header
       className={[
         "sticky top-0 z-50 w-full border-b border-[#d9d9d9]",
-        scrolled ? "bg-[#f2e4e0]/85 backdrop-blur shadow-sm" : "bg-[#f2e4e0]",
+        scrolled ? "bg-[#f2e4e0]/85 backdrop-blur shadow-sm" : "bg-[#f2e4e0]"
       ].join(" ")}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-8 h-[80px] flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
+        <Link href={`/${locale}`} className="flex items-center gap-3">
           <div className="relative w-[24px] h-[35px]">
-            <Image src="/landing/icon.png" alt="Logo" fill className="object-contain" priority />
+            <Image
+              src="/landing/icon.png"
+              alt="Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
           <span className="font-['Press_Start_2P',sans-serif] text-[12px] text-[#1e1e1e]">
             Home → Work
@@ -150,14 +132,19 @@ export default function Navigation({ locale }: { locale: Locale }) {
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-6">
-          <NavLinks className="flex items-center gap-2" />
+          <NavLinks locale={locale} className="flex items-center gap-2" />
+
+          {/* ✅ existing dropdown/globe LocaleSwitcher */}
           <LocaleSwitcher currentLocale={locale} />
-          <AuthArea />
+
+          <AuthArea locale={locale} />
         </div>
 
         {/* Mobile controls */}
         <div className="md:hidden flex items-center gap-3">
+          {/* ✅ existing dropdown/globe LocaleSwitcher */}
           <LocaleSwitcher currentLocale={locale} />
+
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -181,7 +168,9 @@ export default function Navigation({ locale }: { locale: Locale }) {
           />
           <div className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-[#f2e4e0] shadow-xl p-6 flex flex-col gap-6">
             <div className="flex items-center justify-between">
-              <span className="font-['Press_Start_2P',sans-serif] text-[12px]">Menu</span>
+              <span className="font-['Press_Start_2P',sans-serif] text-[12px]">
+                Menu
+              </span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -193,12 +182,13 @@ export default function Navigation({ locale }: { locale: Locale }) {
             </div>
 
             <NavLinks
+              locale={locale}
               onNavigate={() => setOpen(false)}
               className="flex flex-col items-start gap-2"
             />
 
-            <div className="pt-2 border-t border-black/10">
-              <AuthArea onNavigate={() => setOpen(false)} />
+            <div className="pt-2 border-t border-black/10 flex flex-col gap-4">
+              <AuthArea locale={locale} onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>
