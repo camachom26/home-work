@@ -15,14 +15,20 @@ export function SurveyShell({
 }) {
   const pct = Math.round((step / total) * 100);
 
-  return (
-    <>
-      <section className="w-full bg-[#f1d5d5]">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-10 md:py-14">
+return (
+  <div
+    className="w-full bg-cover bg-center bg-no-repeat"
+    style={{ backgroundImage: "url('/surveybackground.png')" }}
+  >
+    {/* Optional overlay for readability */}
+    <div className="w-full bg-white/10 backdrop-blur-[0.5px]">
+      <section className="w-full">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 pt-10 md:pt-14 pb-4">
           <div className="rounded-[28px] bg-white/70 backdrop-blur-sm border border-black/10 shadow-[0px_10px_30px_rgba(0,0,0,0.12)] p-6 md:p-10">
             <p className="font-['Press_Start_2P',sans-serif] text-[#0c0c0d] text-[clamp(18px,2.4vw,34px)] leading-[1.2]">
               {title}
             </p>
+
             {subtitle && (
               <p className="mt-4 font-['Space_Mono',sans-serif] text-[#1e1e1e] text-[14px] sm:text-[16px] leading-[1.5] max-w-3xl">
                 {subtitle}
@@ -46,15 +52,16 @@ export function SurveyShell({
         </div>
       </section>
 
-      <main className="w-full bg-[#dee0eb]">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-10 md:py-14">
+      <main className="w-full">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 pt-0 pb-10 md:pb-14">
           <div className="rounded-[28px] bg-white/80 backdrop-blur-sm border border-black/10 shadow-[0px_10px_30px_rgba(0,0,0,0.12)]">
             <div className="p-6 md:p-10">{children}</div>
           </div>
         </div>
       </main>
-    </>
-  );
+    </div>
+  </div>
+);
 }
 
 export function PrimaryButton({

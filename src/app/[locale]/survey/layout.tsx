@@ -18,7 +18,6 @@ export default async function SurveyLayout({
     <SurveyProvider>
       <div className="min-h-screen w-full bg-white">
         {children}
-        <Footer />
       </div>
     </SurveyProvider>
   );
