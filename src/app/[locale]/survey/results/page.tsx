@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSurvey } from "@/app/components/survey/SurveyProvider";
+import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 import { SurveyShell, PrimaryButton, SecondaryButton } from "@/app/components/survey/SurveyShell";
 import type { LiveJob } from "@/app/api/jobs/route";
 
@@ -249,6 +250,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
 export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
+  const { chosenJobs, addJobPath } = useJobPaths();
 
   const matches = useMemo(() => matchJobs(answers), [answers]);
 
@@ -316,6 +318,38 @@ export default function SurveyResults() {
               location={answers.constraints.location}
               radiusMiles={answers.constraints.radiusMiles}
             />
+
+            <div className="mt-4 flex flex-col gap-2">
+              {chosenJobs.some((j) => j.id === m.job.id) ? (
+                <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-white text-center">
+                  ✓ Added to your job paths
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    addJobPath({
+                      id: m.job.id,
+                      title: m.job.title,
+                      summary: m.job.summary,
+                      payRange: m.job.payRange,
+                      remoteFit: m.job.remoteFit,
+                      score: m.score,
+                    })
+                  }
+                  className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] transition"
+                >
+                  Choose this job path
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => router.push(`resources/${m.job.id}`)}
+                className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] transition"
+              >
+                View training resources →
+              </button>
+            </div>
           </div>
         ))}
       </div>
