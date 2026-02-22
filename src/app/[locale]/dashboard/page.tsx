@@ -196,8 +196,8 @@ export default function DashboardPage() {
 
                 <div className="flex flex-col gap-3">
                   <SecondaryButton onClick={() => scrollTo(jobPathsRef)}>Job Paths</SecondaryButton>
-                  <SecondaryButton onClick={() => scrollTo(trainingRef)}>Training</SecondaryButton>
                   <SecondaryButton onClick={() => scrollTo(snapshotRef)}>Budget</SecondaryButton>
+                  <SecondaryButton onClick={() => scrollTo(trainingRef)}>Training</SecondaryButton>
                 </div>
               </div>
             </div>
@@ -213,9 +213,14 @@ export default function DashboardPage() {
                 title="Chosen Job Paths"
                 subtitle="Jobs you've saved from your survey results. Use these as your targets."
                 right={
-                  <SecondaryButton onClick={() => router.push("survey/step-1")}>
-                    Retake survey
-                  </SecondaryButton>
+                  <div className="flex gap-2">
+                    <PrimaryButton onClick={() => router.push("survey/results")}>
+                      Go to results
+                    </PrimaryButton>
+                    <SecondaryButton onClick={() => router.push("survey/step-1")}>
+                      Retake survey
+                    </SecondaryButton>
+                  </div>
                 }
               >
                 {chosenJobs.length === 0 ? (
