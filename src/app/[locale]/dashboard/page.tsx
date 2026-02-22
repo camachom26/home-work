@@ -160,19 +160,8 @@ export default function DashboardPage() {
   const overBudget = totalTrainingCost > budgetMax;
 
   const stats: Stat[] = useMemo(
-    () => [
-      {
-        label: "Minimum Wage",
-        value: answers.constraints?.minWage ?? "Not set",
-        sub: "Target hourly rate",
-      },
-      {
-        label: "Training Budget",
-        value: trainingBudgetLabel[answers.constraints?.trainingBudget] ?? answers.constraints?.trainingBudget ?? "Not set",
-        sub: "Budget set for upskilling & courses",
-      },
-    ],
-    [answers.constraints?.minWage, answers.constraints?.trainingBudget]
+    () => [{ label: "Monthly Budget", value: "$1,650", sub: "Planned spending" }],
+    []
   );
 
   return (
@@ -287,38 +276,6 @@ export default function DashboardPage() {
                   {stats.map((s) => (
                     <StatCard key={s.label} stat={s} />
                   ))}
-                </div>
-
-                {/* Training spend widget */}
-                <div className="mt-6 rounded-[22px] bg-white/70 border border-black/10 p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px]">
-                      Training Spend
-                    </p>
-                    <p className={[
-                      "font-['Press_Start_2P',sans-serif] text-[13px]",
-                      overBudget ? "text-red-500" : "text-[#0c0c0d]"
-                    ].join(" ")}>
-                      ${totalTrainingCost.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="mt-3 h-2 rounded-full bg-black/10 overflow-hidden">
-                    <div
-                      className={[
-                        "h-full rounded-full transition-all",
-                        overBudget ? "bg-red-400" : budgetPct > 0.75 ? "bg-yellow-400" : "bg-green-400"
-                      ].join(" ")}
-                      style={{ width: `${budgetPct * 100}%` }}
-                    />
-                  </div>
-                  <p className={[
-                    "mt-2 font-['Space_Mono',sans-serif] text-[12px]",
-                    overBudget ? "text-red-500" : "text-[#8b8b8b]"
-                  ].join(" ")}>
-                    {overBudget
-                      ? `$${(totalTrainingCost - budgetMax).toLocaleString()} over budget`
-                      : `$${(budgetMax - totalTrainingCost).toLocaleString()} remaining`}
-                  </p>
                 </div>
               </Card>
             </div>

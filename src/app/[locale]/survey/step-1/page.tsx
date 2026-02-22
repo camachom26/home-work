@@ -20,7 +20,7 @@ export default function SurveyStep1() {
   const [interimTranscript, setInterimTranscript] = useState("");
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition ?? (window as any).webkitSpeechRecognition;
     setBrowserSupportsSpeech(!!SpeechRecognition);
     
     if (SpeechRecognition) {
