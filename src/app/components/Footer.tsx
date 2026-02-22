@@ -53,10 +53,15 @@ export default function Footer() {
                 </Link>
                 <span className="opacity-70">Sign Up</span>
             </div>
-            <div className="flex flex-col gap-2 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e]">
-                <p className="font-semibold">Support</p>
-                <span className="opacity-70">Feedback</span>
-            </div>
+                <div className="flex flex-col gap-2 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e]">
+                    <p className="font-semibold">Support</p>
+                    <Link
+                        href={`/${locale}/feedback`}
+                        className="text-[#4b4b4b] hover:text-black transition"
+                    >
+                        Feedback
+                    </Link>
+                </div>
             </div>
         </div>
     </footer>

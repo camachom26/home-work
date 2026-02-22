@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import type { Locale } from "@/i18n/routing";
 import { LocaleSwitcher } from "@/app/components/LocaleSwitcher";
 
@@ -68,21 +68,20 @@ function AuthArea({ onNavigate, locale }: { onNavigate?: () => void; locale: Loc
   return (
     <div className="flex items-center gap-3">
       <SignedOut>
-        <SignInButton mode="modal">
-          <button
+          <Link
+            href={`/${locale}/signin`}
             onClick={onNavigate}
-            className="bg-[#e3e3e3] px-4 py-2 rounded-[8px] font-['Space_Mono',sans-serif] text-[16px] text-[#1e1e1e] border border-[#767676]"
+            className="bg-[#e3e3e3] px-4 py-2 rounded-[8px] font-['Space_Mono',sans-serif] text-[16px] text-[#1e1e1e] border border-[#767676] inline-flex items-center"
           >
             Sign in
-          </button>
-        </SignInButton>
+          </Link>
 
         {/* If you actually have /[locale]/register, keep this.
             If you use Clerk's /sign-up, swap to `href={`/${locale}/sign-up`}` or `/sign-up` based on your setup. */}
         <Link
-          href={`/${locale}/register`}
+          href={`/${locale}/signin`}
           onClick={onNavigate}
-          className="bg-[#2c2c2c] px-4 py-2 rounded-[8px] font-['Space_Mono',sans-serif] text-[16px] text-[#f5f5f5]"
+          className="bg-[#2c2c2c] px-4 py-2 rounded-[8px] font-['Space_Mono',sans-serif] text-[16px] text-[#f5f5f5] inline-flex items-center"
         >
           Register
         </Link>
@@ -135,7 +134,6 @@ export default function Navigation({ locale }: { locale: Locale }) {
         <div className="hidden md:flex items-center gap-6">
           <NavLinks locale={locale} className="flex items-center gap-2" />
 
-          {/* ✅ existing dropdown/globe LocaleSwitcher */}
           <LocaleSwitcher currentLocale={locale} />
 
           <AuthArea locale={locale} />
