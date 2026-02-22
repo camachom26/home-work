@@ -4,7 +4,6 @@ import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
-import { useSurvey } from "@/app/components/survey/SurveyProvider";
 
 type Stat = { label: string; value: string; sub?: string };
 
@@ -114,7 +113,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user } = useUser();
   const { chosenJobs, removeJobPath, savedResources, removeTrainingResource } = useJobPaths();
-  const { answers } = useSurvey();
 
   const jobPathsRef = useRef<HTMLDivElement>(null);
   const snapshotRef = useRef<HTMLDivElement>(null);
@@ -124,6 +122,9 @@ export default function DashboardPage() {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+<<<<<<< HEAD
+  const userName = "Mia";
+=======
   const userName = user?.firstName ?? "there";
 
   const trainingBudgetLabel: Record<string, string> = {
@@ -158,21 +159,11 @@ export default function DashboardPage() {
   const budgetMax = trainingBudgetMax[answers.constraints.trainingBudget] ?? 1000;
   const budgetPct = Math.min(totalTrainingCost / budgetMax, 1);
   const overBudget = totalTrainingCost > budgetMax;
+>>>>>>> f08a59b182dfce2226923b74f5fc3d520fbfa324
 
   const stats: Stat[] = useMemo(
-    () => [
-      {
-        label: "Minimum Wage",
-        value: `$${answers.constraints.minWage}/hr`,
-        sub: "Minimum acceptable hourly pay",
-      },
-      {
-        label: "Training Budget",
-        value: trainingBudgetLabel[answers.constraints.trainingBudget] ?? answers.constraints.trainingBudget,
-        sub: "Budget set for upskilling & courses",
-      },
-    ],
-    [answers.constraints.minWage, answers.constraints.trainingBudget]
+    () => [{ label: "Monthly Budget", value: "$1,650", sub: "Planned spending" }],
+    []
   );
 
   return (
@@ -288,46 +279,6 @@ export default function DashboardPage() {
                     <StatCard key={s.label} stat={s} />
                   ))}
                 </div>
-
-                {/* Training spend widget */}
-                <div className="mt-6 rounded-[22px] bg-white/70 border border-black/10 shadow-[0px_10px_25px_rgba(0,0,0,0.08)] p-5">
-                  <div className="flex items-center justify-between gap-4 mb-3">
-                    <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px]">
-                      Training Spend
-                    </p>
-                    <p className={cn(
-                      "font-['Press_Start_2P',sans-serif] text-[14px] leading-[1.2]",
-                      overBudget ? "text-red-500" : "text-[#0c0c0d]"
-                    )}>
-                      ${totalTrainingCost.toLocaleString()}
-                    </p>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full h-3 rounded-full bg-black/10 overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        overBudget ? "bg-red-400" : budgetPct > 0.75 ? "bg-yellow-400" : "bg-green-400"
-                      )}
-                      style={{ width: `${budgetPct * 100}%` }}
-                    />
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <p className="font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[11px]">
-                      {savedResources.length} course{savedResources.length !== 1 ? "s" : ""} selected
-                    </p>
-                    <p className={cn(
-                      "font-['Space_Mono',sans-serif] text-[11px]",
-                      overBudget ? "text-red-500" : "text-[#8b8b8b]"
-                    )}>
-                      {overBudget
-                        ? `$${(totalTrainingCost - budgetMax).toLocaleString()} over budget`
-                        : `$${(budgetMax - totalTrainingCost).toLocaleString()} remaining`}
-                    </p>
-                  </div>
-                </div>
               </Card>
             </div>
 
@@ -395,7 +346,11 @@ export default function DashboardPage() {
                 )}
               </Card>
             </div>
-
+              <footer className="pt-6 pb-16">
+              <p className="font-['Space_Mono',sans-serif] text-[12px] text-black/50">
+                © Winghacks 2026: Mia Camacho, Jade Xu, Daniel Lipszyc, Celia Mercier
+              </p>
+            </footer>
           </div>
         </main>
       </div>
