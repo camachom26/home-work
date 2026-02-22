@@ -1,4 +1,3 @@
-// src/app/[locale]/layout.tsx
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/routing";
 import { NextIntlClientProvider } from "next-intl";
@@ -14,18 +13,23 @@ export default async function LocaleLayout({
   params
 }: {
   children: ReactNode;
-  params: Promise<{ locale: Locale }>;
+  params: { locale: string };
 }) {
-  const { locale } = await params;
+  const locale: Locale = params.locale === "es" ? "es" : "en";
+
   const messages = await getMessages({ locale });
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <SurveyProvider>
         <JobPathsProvider>
-          <div className="min-h-screen w-full bg-transparent">
+          <div className="min-h-screen w-full bg-transparent flex flex-col">
             <Navigation locale={locale} />
-            {children}
+
+            <main className="flex-1">
+              {children}
+            </main>
+
             <Footer />
           </div>
         </JobPathsProvider>

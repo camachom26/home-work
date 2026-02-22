@@ -21,7 +21,7 @@ export function PanelImageContent() {
     >
       <div className="mx-auto max-w-7xl px-6 md:px-8 py-12 md:py-16 md:min-h-[560px] flex items-center">
         {/* Wider image layout: 60% image / 40% text */}
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 md:gap-12 items-center w-full">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 md:gap-12 items-top w-full">
           
           {/* Image side */}
           <div className="w-full">
