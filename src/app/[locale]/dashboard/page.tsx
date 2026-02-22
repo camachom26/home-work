@@ -4,6 +4,7 @@ import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
+import { useSurvey } from "@/app/components/survey/SurveyProvider";
 
 type Stat = { label: string; value: string; sub?: string };
 
@@ -113,6 +114,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user } = useUser();
   const { chosenJobs, removeJobPath, savedResources, removeTrainingResource } = useJobPaths();
+  const { answers } = useSurvey();
 
   const jobPathsRef = useRef<HTMLDivElement>(null);
   const snapshotRef = useRef<HTMLDivElement>(null);
@@ -122,9 +124,6 @@ export default function DashboardPage() {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-<<<<<<< HEAD
-  const userName = "Mia";
-=======
   const userName = user?.firstName ?? "there";
 
   const trainingBudgetLabel: Record<string, string> = {
@@ -156,14 +155,24 @@ export default function DashboardPage() {
     [savedResources]
   );
 
-  const budgetMax = trainingBudgetMax[answers.constraints.trainingBudget] ?? 1000;
+  const budgetMax = trainingBudgetMax[answers.constraints?.trainingBudget] ?? 1000;
   const budgetPct = Math.min(totalTrainingCost / budgetMax, 1);
   const overBudget = totalTrainingCost > budgetMax;
->>>>>>> f08a59b182dfce2226923b74f5fc3d520fbfa324
 
   const stats: Stat[] = useMemo(
-    () => [{ label: "Monthly Budget", value: "$1,650", sub: "Planned spending" }],
-    []
+    () => [
+      {
+        label: "Minimum Wage",
+        value: answers.constraints?.minWage ?? "Not set",
+        sub: "Target hourly rate",
+      },
+      {
+        label: "Training Budget",
+        value: trainingBudgetLabel[answers.constraints?.trainingBudget] ?? answers.constraints?.trainingBudget ?? "Not set",
+        sub: "Budget set for upskilling & courses",
+      },
+    ],
+    [answers.constraints?.minWage, answers.constraints?.trainingBudget]
   );
 
   return (
@@ -278,6 +287,38 @@ export default function DashboardPage() {
                   {stats.map((s) => (
                     <StatCard key={s.label} stat={s} />
                   ))}
+                </div>
+
+                {/* Training spend widget */}
+                <div className="mt-6 rounded-[22px] bg-white/70 border border-black/10 p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[13px]">
+                      Training Spend
+                    </p>
+                    <p className={[
+                      "font-['Press_Start_2P',sans-serif] text-[13px]",
+                      overBudget ? "text-red-500" : "text-[#0c0c0d]"
+                    ].join(" ")}>
+                      ${totalTrainingCost.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="mt-3 h-2 rounded-full bg-black/10 overflow-hidden">
+                    <div
+                      className={[
+                        "h-full rounded-full transition-all",
+                        overBudget ? "bg-red-400" : budgetPct > 0.75 ? "bg-yellow-400" : "bg-green-400"
+                      ].join(" ")}
+                      style={{ width: `${budgetPct * 100}%` }}
+                    />
+                  </div>
+                  <p className={[
+                    "mt-2 font-['Space_Mono',sans-serif] text-[12px]",
+                    overBudget ? "text-red-500" : "text-[#8b8b8b]"
+                  ].join(" ")}>
+                    {overBudget
+                      ? `$${(totalTrainingCost - budgetMax).toLocaleString()} over budget`
+                      : `$${(budgetMax - totalTrainingCost).toLocaleString()} remaining`}
+                  </p>
                 </div>
               </Card>
             </div>
