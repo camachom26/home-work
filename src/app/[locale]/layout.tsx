@@ -1,3 +1,4 @@
+// src/app/[locale]/layout.tsx
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/routing";
 import { NextIntlClientProvider } from "next-intl";
@@ -13,9 +14,13 @@ export default async function LocaleLayout({
   params
 }: {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const locale: Locale = params.locale === "es" ? "es" : "en";
+
+  const { locale: rawLocale } = await params;
+
+
+  const locale: Locale = rawLocale === "es" ? "es" : "en";
 
   const messages = await getMessages({ locale });
 
@@ -26,9 +31,7 @@ export default async function LocaleLayout({
           <div className="min-h-screen w-full bg-transparent flex flex-col">
             <Navigation locale={locale} />
 
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
 
             <Footer />
           </div>
