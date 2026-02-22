@@ -281,6 +281,7 @@ export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
   const { chosenJobs, addJobPath } = useJobPaths();
+  const { removeJobPath } = useJobPaths();
 
   const matches = useMemo(() => matchJobs(answers), [answers]);
 
@@ -632,36 +633,49 @@ export default function SurveyResults() {
 
           {/* Action buttons */}
           <div className="mt-7 flex flex-col gap-3">
-            {chosenJobs.some((j) => j.id === selectedMatch.job.id) ? (
-              <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[14px] text-white text-center">
-                ✓ Added to your job paths
-              </div>
-            ) : (
+          {(() => {
+            const isChosen = chosenJobs.some((j) => j.id === selectedMatch.job.id);
+
+            return (
               <button
                 type="button"
                 onClick={() => {
-                  addJobPath({
-                    id: selectedMatch.job.id,
-                    title: selectedMatch.job.title,
-                    summary: selectedMatch.job.summary,
-                    payRange: selectedMatch.job.payRange,
-                    remoteFit: selectedMatch.job.remoteFit,
-                    score: selectedMatch.score,
-                  });
+                  if (isChosen) {
+                    removeJobPath(selectedMatch.job.id);
+                  } else {
+                    addJobPath({
+                      id: selectedMatch.job.id,
+                      title: selectedMatch.job.title,
+                      summary: selectedMatch.job.summary,
+                      payRange: selectedMatch.job.payRange,
+                      remoteFit: selectedMatch.job.remoteFit,
+                      score: selectedMatch.score,
+                    });
+                  }
                 }}
-                className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition"
+                className={[
+                  "w-full rounded-xl px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition border",
+                  isChosen
+                    ? "border-black/30 bg-black/10 text-[#1e1e1e] hover:bg-black hover:text-white"
+                    : "border-black bg-black text-white hover:bg-black/80"
+                ].join(" ")}
               >
-                Choose this job path
+                {isChosen ? "Remove this job path" : "Choose this job path"}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => { setSelectedMatch(null); router.push(`resources/${selectedMatch.job.id}`); }}
-              className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] transition"
-            >
-              View training resources →
-            </button>
-          </div>
+            );
+          })()}
+
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedMatch(null);
+              router.push(`resources/${selectedMatch.job.id}`);
+            }}
+            className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] transition"
+          >
+            View training resources →
+          </button>
+        </div>
         </div>
       </div>,
       document.body

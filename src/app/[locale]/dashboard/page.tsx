@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 
 type Stat = { label: string; value: string; sub?: string };
@@ -110,6 +111,7 @@ function SecondaryButton({
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useUser();
   const { chosenJobs, removeJobPath, savedResources, removeTrainingResource } = useJobPaths();
 
   const jobPathsRef = useRef<HTMLDivElement>(null);
@@ -120,7 +122,44 @@ export default function DashboardPage() {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+<<<<<<< HEAD
   const userName = "Mia";
+=======
+  const userName = user?.firstName ?? "there";
+
+  const trainingBudgetLabel: Record<string, string> = {
+    "0-250": "$0 – $250",
+    "250-1000": "$250 – $1,000",
+    "1000-3000": "$1,000 – $3,000",
+    "3000+": "$3,000+",
+  };
+
+  // Upper bound of each budget range (used for the progress bar)
+  const trainingBudgetMax: Record<string, number> = {
+    "0-250": 250,
+    "250-1000": 1000,
+    "1000-3000": 3000,
+    "3000+": 3000,
+  };
+
+  // Parse cost strings like "~$100 exam fee", "Free to audit", "~$49/month" → number
+  function parseCost(cost: string): number {
+    if (/free|no cost/i.test(cost)) return 0;
+    if (/varies/i.test(cost)) return 0;
+    const match = cost.match(/\$(\d[\d,]*)/);
+    if (match) return parseFloat(match[1].replace(/,/g, ""));
+    return 0;
+  }
+
+  const totalTrainingCost = useMemo(
+    () => savedResources.reduce((sum, r) => sum + parseCost(r.cost), 0),
+    [savedResources]
+  );
+
+  const budgetMax = trainingBudgetMax[answers.constraints.trainingBudget] ?? 1000;
+  const budgetPct = Math.min(totalTrainingCost / budgetMax, 1);
+  const overBudget = totalTrainingCost > budgetMax;
+>>>>>>> f08a59b182dfce2226923b74f5fc3d520fbfa324
 
   const stats: Stat[] = useMemo(
     () => [{ label: "Monthly Budget", value: "$1,650", sub: "Planned spending" }],
@@ -149,7 +188,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-3">
                   <SecondaryButton onClick={() => scrollTo(jobPathsRef)}>Job Paths</SecondaryButton>
                   <SecondaryButton onClick={() => scrollTo(trainingRef)}>Training</SecondaryButton>
-                  <PrimaryButton onClick={() => scrollTo(snapshotRef)}>Budget</PrimaryButton>
+                  <SecondaryButton onClick={() => scrollTo(snapshotRef)}>Budget</SecondaryButton>
                 </div>
               </div>
             </div>
@@ -213,7 +252,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                          <SecondaryButton onClick={() => router.push(`survey/resources/${job.id}`)}>
+                          <SecondaryButton onClick={() => router.push(`survey/resources/${job.id}?from=dashboard`)}>
                             Resources
                           </SecondaryButton>
                           <SecondaryButton onClick={() => removeJobPath(job.id)}>
