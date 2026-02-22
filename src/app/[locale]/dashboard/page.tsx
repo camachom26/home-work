@@ -159,10 +159,6 @@ export default function DashboardPage() {
   const budgetPct = Math.min(totalTrainingCost / budgetMax, 1);
   const overBudget = totalTrainingCost > budgetMax;
 
-  const stats: Stat[] = useMemo(
-    () => [{ label: "Monthly Budget", value: "$1,650", sub: "Planned spending" }],
-    []
-  );
 
   return (
     <div
@@ -272,10 +268,38 @@ export default function DashboardPage() {
             {/* Budget / Snapshot */}
             <div ref={snapshotRef}>
               <Card title="Budget" subtitle="Your current budget snapshot.">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {stats.map((s) => (
-                    <StatCard key={s.label} stat={s} />
-                  ))}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <StatCard stat={{
+                      label: "Training Budget",
+                      value: trainingBudgetLabel[answers.constraints?.trainingBudget] ?? "—",
+                      sub: "Your selected budget range",
+                    }} />
+                    <StatCard stat={{
+                      label: "Total Training Cost",
+                      value: totalTrainingCost === 0 ? "—" : `$${totalTrainingCost.toLocaleString()}`,
+                      sub: overBudget ? "Over budget" : savedResources.length === 0 ? "No resources saved yet" : "Within budget",
+                    }} />
+                  </div>
+                  {savedResources.length > 0 && (
+                    <div className="rounded-[22px] bg-white/70 border border-black/10 p-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">Budget used</p>
+                        <p className={`font-['Space_Mono',sans-serif] text-[12px] font-bold ${overBudget ? "text-red-500" : "text-[#1e1e1e]"}`}>
+                          {Math.round(budgetPct * 100)}%{overBudget ? " — Over budget" : ""}
+                        </p>
+                      </div>
+                      <div className="w-full h-3 rounded-full bg-black/10 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${overBudget ? "bg-red-500" : "bg-[#1e1e1e]"}`}
+                          style={{ width: `${budgetPct * 100}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 font-['Space_Mono',sans-serif] text-[11px] text-[#8b8b8b]">
+                        ${totalTrainingCost.toLocaleString()} of ${budgetMax.toLocaleString()} max
+                      </p>
+                    </div>
+                  )}
                 </div>
               </Card>
             </div>
