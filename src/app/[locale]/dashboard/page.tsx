@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 import { useSurvey } from "@/app/components/survey/SurveyProvider";
 
@@ -111,6 +112,7 @@ function SecondaryButton({
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useUser();
   const { chosenJobs, removeJobPath, savedResources, removeTrainingResource } = useJobPaths();
   const { answers } = useSurvey();
 
@@ -122,7 +124,7 @@ export default function DashboardPage() {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const userName = "there";
+  const userName = user?.firstName ?? "there";
 
   const trainingBudgetLabel: Record<string, string> = {
     "0-250": "$0 – $250",
@@ -195,7 +197,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-3">
                   <SecondaryButton onClick={() => scrollTo(jobPathsRef)}>Job Paths</SecondaryButton>
                   <SecondaryButton onClick={() => scrollTo(trainingRef)}>Training</SecondaryButton>
-                  <PrimaryButton onClick={() => scrollTo(snapshotRef)}>Budget</PrimaryButton>
+                  <SecondaryButton onClick={() => scrollTo(snapshotRef)}>Budget</SecondaryButton>
                 </div>
               </div>
             </div>
@@ -259,7 +261,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                          <SecondaryButton onClick={() => router.push(`survey/resources/${job.id}`)}>
+                          <SecondaryButton onClick={() => router.push(`survey/resources/${job.id}?from=dashboard`)}>
                             Resources
                           </SecondaryButton>
                           <SecondaryButton onClick={() => removeJobPath(job.id)}>
