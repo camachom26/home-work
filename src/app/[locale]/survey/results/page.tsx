@@ -7,6 +7,7 @@ import { useSurvey } from "@/app/components/survey/SurveyProvider";
 import { useJobPaths } from "@/app/components/survey/JobPathsProvider";
 import { SurveyShell, PrimaryButton, SecondaryButton } from "@/app/components/survey/SurveyShell";
 import type { LiveJob } from "@/app/api/jobs/route";
+import { findClosestJob } from "@/app/data/jobResources";
 
 type SkillId = import("@/app/components/survey/SurveyProvider").SkillId;
 type Answers = import("@/app/components/survey/SurveyProvider").Answers;
@@ -174,6 +175,8 @@ function matchJobs(answers: Answers): Match[] {
 // ------------------------------------------------------------
 // LiveListings — Adzuna search only, no Gemini
 // ------------------------------------------------------------
+const BTN = "w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition";
+
 type LiveListingsProps = {
   jobTitle: string;
   remote: string;
@@ -188,12 +191,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   const load = useCallback(async () => {
     setState("loading");
     try {
-      const params = new URLSearchParams({
-        query: jobTitle,
-        remote,
-        location,
-        radiusMiles: String(radiusMiles),
-      });
+      const params = new URLSearchParams({ query: jobTitle, remote, location, radiusMiles: String(radiusMiles) });
       const res = await fetch(`/api/jobs?${params.toString()}`);
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json() as { jobs: LiveJob[] };
@@ -205,69 +203,34 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
   }, [jobTitle, remote, location, radiusMiles]);
 
   if (state === "idle") {
-    return (
-      <button
-        type="button"
-        onClick={load}
-        className="mt-5 w-full rounded-xl border border-black/15 bg-white/60 hover:bg-white px-4 py-3 font-['Space_Mono',sans-serif] text-[13px] text-[#1e1e1e] transition"
-      >
-        Find real listings →
-      </button>
-    );
+    return <button type="button" onClick={load} className={BTN}>Find real listings →</button>;
   }
 
   if (state === "loading") {
-    return (
-      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b] animate-pulse">
-        Searching jobs…
-      </p>
-    );
+    return <p className="font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b] animate-pulse">Searching jobs…</p>;
   }
 
   if (state === "error") {
-    return (
-      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-red-500">
-        Could not load listings. Check your API configuration.
-      </p>
-    );
+    return <p className="font-['Space_Mono',sans-serif] text-[13px] text-red-500">Could not load listings. Check your API configuration.</p>;
   }
 
   if (jobs.length === 0) {
-    return (
-      <p className="mt-5 font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b]">
-        No listings found for this title right now.
-      </p>
-    );
+    return <p className="font-['Space_Mono',sans-serif] text-[13px] text-[#4b4b4b]">No listings found for this title right now.</p>;
   }
 
   return (
-    <div className="mt-5 space-y-2">
+    <div className="space-y-2">
       <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px]">Real listings</p>
       {jobs.map((j) => (
-        <a
-          key={j.id}
-          href={j.applyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <a key={j.id} href={j.applyUrl} target="_blank" rel="noopener noreferrer"
           className="flex items-start justify-between gap-3 rounded-xl border border-black/10 bg-white/60 hover:bg-white px-4 py-3 transition group"
         >
           <div className="min-w-0">
-            <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px] truncate group-hover:underline">
-              {j.title}
-            </p>
-            <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px] mt-0.5">
-              {j.company} · {j.location}
-              {j.isRemote && " · Remote"}
-            </p>
-            {j.publisher && (
-              <p className="font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[11px] mt-0.5">
-                via {j.publisher}
-              </p>
-            )}
+            <p className="font-['Space_Mono',sans-serif] font-bold text-[#1e1e1e] text-[13px] truncate group-hover:underline">{j.title}</p>
+            <p className="font-['Space_Mono',sans-serif] text-[#4b4b4b] text-[12px] mt-0.5">{j.company} · {j.location}{j.isRemote && " · Remote"}</p>
+            {j.publisher && <p className="font-['Space_Mono',sans-serif] text-[#8b8b8b] text-[11px] mt-0.5">via {j.publisher}</p>}
           </div>
-          <span className="shrink-0 mt-0.5 font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">
-            Apply →
-          </span>
+          <span className="shrink-0 mt-0.5 font-['Space_Mono',sans-serif] text-[12px] text-[#4b4b4b]">Apply →</span>
         </a>
       ))}
     </div>
@@ -280,8 +243,7 @@ function LiveListings({ jobTitle, remote, location, radiusMiles }: LiveListingsP
 export default function SurveyResults() {
   const router = useRouter();
   const { answers } = useSurvey();
-  const { chosenJobs, addJobPath } = useJobPaths();
-  const { removeJobPath } = useJobPaths();
+  const { chosenJobs, addJobPath, removeJobPath } = useJobPaths();
 
   const matches = useMemo(() => matchJobs(answers), [answers]);
 
@@ -621,18 +583,14 @@ export default function SurveyResults() {
             </div>
           )}
 
-          {/* Live listings */}
-          <div className="mt-7 border-t border-black/10 pt-6">
+          {/* Action buttons */}
+          <div className="mt-7 border-t border-black/10 pt-6 flex flex-col gap-3">
             <LiveListings
               jobTitle={selectedMatch.job.title}
               remote={answers.constraints.remote}
               location={answers.constraints.location}
               radiusMiles={answers.constraints.radiusMiles}
             />
-          </div>
-
-          {/* Action buttons */}
-          <div className="mt-7 flex flex-col gap-3">
           {(() => {
             const isChosen = chosenJobs.some((j) => j.id === selectedMatch.job.id);
 
@@ -653,12 +611,7 @@ export default function SurveyResults() {
                     });
                   }
                 }}
-                className={[
-                  "w-full rounded-xl px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition border",
-                  isChosen
-                    ? "border-black/30 bg-black/10 text-[#1e1e1e] hover:bg-black hover:text-white"
-                    : "border-black bg-black text-white hover:bg-black/80"
-                ].join(" ")}
+                className={BTN}
               >
                 {isChosen ? "Remove this job path" : "Choose this job path"}
               </button>
@@ -671,7 +624,7 @@ export default function SurveyResults() {
               setSelectedMatch(null);
               router.push(`resources/${selectedMatch.job.id}`);
             }}
-            className="w-full rounded-xl border border-black/20 bg-black/5 hover:bg-black hover:text-white px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] text-[#1e1e1e] transition"
+            className={BTN}
           >
             View training resources →
           </button>
@@ -720,26 +673,21 @@ export default function SurveyResults() {
             </span>
           </div>
 
-          {/* Live listings */}
-          <div className="mt-7 border-t border-black/10 pt-6">
+          {/* Action buttons */}
+          <div className="mt-7 border-t border-black/10 pt-6 flex flex-col gap-3">
             <LiveListings
               jobTitle={simplifyTitle(selectedAITitle)}
               remote={answers.constraints.remote}
               location={answers.constraints.location}
               radiusMiles={answers.constraints.radiusMiles}
             />
-          </div>
-
-          {/* Action buttons */}
-          <div className="mt-7 flex flex-col gap-3">
-            {chosenJobs.some((j) => j.id === `ai::${selectedAITitle}`) ? (
-              <div className="w-full rounded-xl border border-black/20 bg-black px-4 py-3 font-['Space_Mono',sans-serif] text-[14px] text-white text-center">
-                ✓ Added to your job paths
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
+            <button
+              type="button"
+              onClick={() => {
+                const isChosen = chosenJobs.some((j) => j.id === `ai::${selectedAITitle}`);
+                if (isChosen) {
+                  removeJobPath(`ai::${selectedAITitle}`);
+                } else {
                   addJobPath({
                     id: `ai::${selectedAITitle}`,
                     title: selectedAITitle,
@@ -748,12 +696,27 @@ export default function SurveyResults() {
                     remoteFit: answers.constraints.remote === "remote" ? "remote" : answers.constraints.remote === "onsite" ? "onsite" : "hybrid",
                     score: 0,
                   });
-                }}
-                className="w-full rounded-xl border border-black bg-black text-white hover:bg-black/80 px-4 py-4 font-['Space_Mono',sans-serif] text-[14px] transition"
-              >
-                Choose this job path
-              </button>
-            )}
+                }
+              }}
+              className={BTN}
+            >
+              {chosenJobs.some((j) => j.id === `ai::${selectedAITitle}`) ? "Remove this job path" : "Choose this job path"}
+            </button>
+            {(() => {
+              const match = findClosestJob(selectedAITitle);
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAITitle(null);
+                    router.push(`resources/${match.id}`);
+                  }}
+                  className={BTN}
+                >
+                  View training resources →
+                </button>
+              );
+            })()}
           </div>
         </div>
       </div>,
